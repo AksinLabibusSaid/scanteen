@@ -106,10 +106,10 @@
   <!-- Bottom action buttons -->
   <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 px-4 pb-4">
     <div class="flex items-center gap-3 bg-[#FAF9F6] rounded-3xl px-5 py-4 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] border border-[#EFEEEB]">
-      <button class="customer-btn-primary flex-1 !py-4 rounded-2xl" type="button" onclick="window.location.href='./index.php?page=status'">
+      <button class="customer-btn-primary flex-1 !py-4 rounded-2xl" type="button" onclick="window.location.href='./index.php?page=status-belum-bayar'">
         Status Pesanan
       </button>
-      <button class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" aria-label="Download" title="Download">
+      <button class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" onclick="window.location.href='./index.php?page=struk'" aria-label="Download" title="Download">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 16l-5-5h3V4h4v7h3l-5 5z" fill="#800000"/>
           <path d="M5 18h14v2H5v-2z" fill="#800000"/>

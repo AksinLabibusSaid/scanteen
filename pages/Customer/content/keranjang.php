@@ -209,7 +209,7 @@
             <!-- CTA Button -->
             <button
               class="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] transition-all hover:opacity-90 active:scale-[0.98]"
-              onclick="window.location.href='./index.php?page=pesanan'"
+              onclick="window.location.href='./index.php?page=checkout'"
             >
               <span class="text-[#800000] text-base font-bold leading-6">Lanjut ke Ringkasan</span>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

@@ -16,16 +16,24 @@ $pageKeyLocal = isset($pageKey) ? (string) $pageKey : 'home';
 <?php
 $titles = [
     'keranjang' => 'KERANJANG',
-    'pembayaran' => 'PEMBAYARAN DI KASIR',
-    'status' => 'STATUS PESANAN',
-    'pesanan' => 'PESANAN',
+    'checkout' => 'RINGKASAN ORDER',
+    'pilih-pembayaran' => 'METODE PEMBAYARAN',
+    'bayar-kasir' => 'PEMBAYARAN DI KASIR',
+    'bayar-qris' => 'PEMBAYARAN QRIS',
+    'status-belum-bayar' => 'STATUS PESANAN',
+    'status-sudah-bayar' => 'STATUS PESANAN',
+    'struk' => 'STRUK PEMBAYARAN',
 ];
 
 $backLinks = [
     'keranjang' => './index.php?page=home',
-    'pembayaran' => './index.php?page=keranjang',
-    'status' => './index.php?page=pembayaran',
-    'pesanan' => './index.php?page=keranjang',
+    'checkout' => './index.php?page=keranjang',
+    'pilih-pembayaran' => './index.php?page=checkout',
+    'bayar-kasir' => './index.php?page=pilih-pembayaran',
+    'bayar-qris' => './index.php?page=pilih-pembayaran',
+    'status-belum-bayar' => './index.php?page=pilih-pembayaran',
+    'status-sudah-bayar' => './index.php?page=status-belum-bayar',
+    'struk' => './index.php?page=status-belum-bayar',
 ];
 
 $title = $titles[$pageKeyLocal] ?? null;

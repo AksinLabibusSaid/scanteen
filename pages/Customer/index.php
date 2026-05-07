@@ -4,9 +4,18 @@ declare(strict_types=1);
 $allowedPages = [
     'home' => __DIR__ . '/content/home.php',
     'keranjang' => __DIR__ . '/content/keranjang.php',
-    'pembayaran' => __DIR__ . '/content/pembayaran.php',
-    'status' => __DIR__ . '/content/status.php',
-    'pesanan' => __DIR__ . '/content/pesanan.php',
+    'checkout' => __DIR__ . '/content/checkout.php',
+    'pilih-pembayaran' => __DIR__ . '/content/pilih-pembayaran.php',
+    'bayar-kasir' => __DIR__ . '/content/bayar-kasir.php',
+    'bayar-qris' => __DIR__ . '/content/bayar-qris.php',
+    'status-belum-bayar' => __DIR__ . '/content/status-belum-bayar.php',
+    'status-sudah-bayar' => __DIR__ . '/content/status-sudah-bayar.php',
+    'struk' => __DIR__ . '/content/struk.php',
+    
+    /* Alias untuk compatibility */
+    'pembayaran' => __DIR__ . '/content/bayar-kasir.php',
+    'status' => __DIR__ . '/content/status-belum-bayar.php',
+    'pesanan' => __DIR__ . '/content/checkout.php',
 ];
 
 $pageKey = isset($_GET['page']) ? (string) $_GET['page'] : 'home';
