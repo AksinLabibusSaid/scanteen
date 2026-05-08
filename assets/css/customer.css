@@ -1,0 +1,518 @@
+:root {
+  --primary: #800000;
+  --primary-dark: #570000;
+
+  /* shared layout */
+  --bg-page: #FAF9F6;
+
+  /* keranjang / pesanan vars */
+  --secondary: #F4F3F1;
+  --text-dark: #1A1C1A;
+  --text-muted: #6B7280;
+  --border-light: #EFEEEB;
+  --bg-light: #F9FAFB;
+  --badge-border: #F3F4F6;
+  --button-border: #E2BFB9;
+  --text-secondary: #5A413D;
+
+  /* semantic tokens used across pages */
+  --text-title: #261817;
+  --text-heading: #1A1C1A;
+  --text-label: #5F5E5B;
+  --border-divider: #EFEEEB;
+  --border-card: #E7E5E4;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.font-plus-jakarta {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.font-kanit {
+  font-family: "Kanit", sans-serif;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.bg-maroon {
+  background-color: var(--primary);
+}
+
+.text-maroon {
+  color: var(--primary);
+}
+
+.border-maroon {
+  border-color: var(--primary);
+}
+
+.btn-maroon {
+  background-color: var(--primary);
+}
+
+.btn-maroon:hover {
+  background-color: var(--primary-dark);
+}
+
+/* ===== Semantic utility classes ===== */
+/* These are referenced across multiple pages */
+.text-text-muted   { color: var(--text-muted); }
+.text-text-dark    { color: var(--text-dark); }
+.text-text-title   { color: var(--text-title); }
+.text-text-heading { color: var(--text-heading); }
+.text-text-label   { color: var(--text-label); }
+.border-border-divider { border-color: var(--border-divider); }
+.border-border-light   { border-color: var(--border-light); }
+.border-border-card    { border-color: var(--border-card); }
+.bg-page { background-color: var(--bg-page); }
+
+/* underline link style used in pembayaran */
+.underline-link {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* ===== Warung card — shared by keranjang + pesanan ===== */
+/* Scope: any page that has warung-card elements */
+.warung-card {
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.warung-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: var(--secondary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.warung-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.warung-content {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.cart-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.item-quantity {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-note {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--badge-border);
+  background-color: var(--bg-light);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.delete-btn {
+  padding: 4px;
+  margin-left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px;
+  border-radius: 8px;
+  background-color: var(--border-light);
+}
+
+.stepper-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  border: 1px solid var(--button-border);
+  background: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stepper-btn:hover {
+  background-color: var(--bg-light);
+}
+
+.stepper-value {
+  min-width: 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-dark);
+  line-height: 24px;
+}
+
+.item-divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 24px 0;
+}
+
+.warung-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background-color: var(--secondary);
+  border-top: 1px solid var(--border-light);
+}
+
+.footer-label {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.footer-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.summary-section {
+  margin-top: 12px;
+  margin-bottom: 48px;
+}
+
+.summary-card {
+  padding: 24px;
+  border-radius: 24px;
+  background-color: var(--primary);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.10), 0 8px 10px -6px rgba(0, 0, 0, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.summary-amount {
+  font-size: 16px;
+  font-weight: 400;
+  color: white;
+  line-height: 24px;
+}
+
+.checkout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 12px;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.10), 0 2px 4px -2px rgba(0, 0, 0, 0.10);
+  transition: background-color 0.2s;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.checkout-btn:hover {
+  background-color: var(--bg-light);
+}
+
+/* ===== Keranjang-only page background ===== */
+/* The warung-card / cart item classes are global (above). */
+body[data-page="keranjang"] {
+  background-color: var(--secondary);
+}
+
+
+/* ===== Pembayaran + Status shared button classes (global) ===== */
+/* Scoped to pembayaran page only, no need to override globally */
+
+.customer-timer-bar {
+  background-color: var(--primary);
+}
+
+.customer-code-box {
+  background-color: #FDF4F3;
+  border: 1.5px dashed #E8B4AE;
+  border-radius: 16px;
+}
+
+.customer-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 9999px;
+  border: 2px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.customer-btn-primary {
+  background-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: 16px;
+  padding: 16px;
+  width: 100%;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.customer-btn-primary:hover {
+  background-color: #6a0000;
+}
+
+.customer-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 2px solid var(--primary);
+  background: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.customer-btn-icon:hover {
+  background-color: rgba(128, 0, 0, 0.05);
+}
+
+/* ===== Status page classes ===== */
+.rounded-card { border-radius: 24px; }
+.shadow-card   { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.shadow-tag    { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03); }
+.rounded-tag   { border-radius: 6px; }
+.rounded-badge { border-radius: 4px; }
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  background-color: #FCECE8;
+  border: 1px solid #FFDAD4;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.order-id {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5F5E5B;
+}
+
+.order-number {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.45px;
+  color: #261817;
+}
+
+/* status-specific item qty (different from global item-quantity) */
+.item-qty {
+  font-size: 15px;
+  font-weight: 500;
+  color: #B22B1D;
+}
+
+/* status page overrides for item-name / item-price / item-note
+   (these have narrower, more compact styles than keranjang/pesanan) */
+body[data-page="status"] .item-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1A1C1A;
+  /* allow wrap in status — override keranjang's nowrap */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+body[data-page="status"] .item-price {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5F5E5B;
+  opacity: 0.75;
+  margin-bottom: 0;
+}
+
+body[data-page="status"] .item-note {
+  font-size: 10px;
+  color: #474743;
+  border: 1px solid #E7E5E4;
+  background: white;
+  border-radius: 6px;
+  padding: 2px 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  display: inline-block;
+  /* reset global flex styles */
+  align-items: unset;
+  margin-bottom: 0;
+  max-width: unset;
+}
+
+.countdown {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  background: rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(6px);
+}
+
+.countdown-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  letter-spacing: 1.6px;
+  font-family: "Courier New", monospace;
+}
+
+.timeline-connector {
+  position: absolute;
+  left: 12px;
+  width: 2px;
+  background-color: #C8A49B;
+}
+
+.step-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: 2px solid var(--primary);
+  background: #fff;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.step-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.step-desc {
+  font-size: 12px;
+  color: #5F5E5B;
+}
+
+/* ===== Responsive adjustments ===== */
+@media (max-width: 640px) {
+  .warung-header,
+  .warung-footer {
+    padding: 12px 16px;
+  }
+
+  .warung-content {
+    padding: 16px;
+  }
+}

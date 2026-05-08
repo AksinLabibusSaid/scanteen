@@ -1,77 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restoran Digital - Pesan Makanan Favorit</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #800000;
-            --primary-dark: #570000;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .font-plus-jakarta {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        
-        .font-kanit {
-            font-family: 'Kanit', sans-serif;
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        .bg-maroon {
-            background-color: var(--primary);
-        }
-        
-        .text-maroon {
-            color: var(--primary);
-        }
-        
-        .border-maroon {
-            border-color: var(--primary);
-        }
-        
-        .btn-maroon {
-            background-color: var(--primary);
-        }
-        
-        .btn-maroon:hover {
-            background-color: var(--primary-dark);
-        }
-    </style>
-</head>
-<body class="bg-white">
-    <div class="min-h-screen bg-white flex justify-center">
-        <div class="w-full max-w-[430px] relative pb-32">
-            
-            <!-- Header -->
-            <header class="sticky top-0 z-30 flex items-center justify-between px-4 py-4 bg-white border-b border-gray-200 shadow-sm">
-                <div class="flex items-center">
-                    <div class="flex items-center gap-1 px-3 py-1 rounded-full" style="background-color: rgba(128, 0, 0, 0.1);">
-                        <svg width="12" height="15" viewBox="0 0 12 15" fill="none">
-                            <path d="M6 7.5C6.4125 7.5 6.76562 7.35312 7.05937 7.05937C7.35312 6.76562 7.5 6.4125 7.5 6C7.5 5.5875 7.35312 5.23438 7.05937 4.94063C6.76562 4.64688 6.4125 4.5 6 4.5C5.5875 4.5 5.23438 4.64688 4.94063 4.94063C4.64688 5.23438 4.5 5.5875 4.5 6C4.5 6.4125 4.64688 6.76562 4.94063 7.05937C5.23438 7.35312 5.5875 7.5 6 7.5ZM6 13.0125C7.525 11.6125 8.65625 10.3406 9.39375 9.19687C10.1313 8.05312 10.5 7.0375 10.5 6.15C10.5 4.7875 10.0656 3.67188 9.19687 2.80312C8.32812 1.93437 7.2625 1.5 6 1.5C4.7375 1.5 3.67188 1.93437 2.80312 2.80312C1.93437 3.67188 1.5 4.7875 1.5 6.15C1.5 7.0375 1.86875 8.05312 2.60625 9.19687C3.34375 10.3406 4.475 11.6125 6 13.0125ZM6 15C3.9875 13.2875 2.48438 11.6969 1.49063 10.2281C0.496875 8.75937 0 7.4 0 6.15C0 4.275 0.603125 2.78125 1.80938 1.66875C3.01562 0.55625 4.4125 0 6 0C7.5875 0 8.98438 0.55625 10.1906 1.66875C11.3969 2.78125 12 4.275 12 6.15C12 7.4 11.5031 8.75937 10.5094 10.2281C9.51562 11.6969 8.0125 13.2875 6 15Z" fill="#800000"/>
-                        </svg>
-                        <span class="text-maroon text-base leading-6">Meja 12</span>
-                    </div>
-                </div>
-                <img src="https://api.builder.io/api/v1/image/assets/TEMP/7c63d6d2f2848f53c163ee7f930ee5fd70edd4d6?width=80" alt="Logo" class="w-10 h-[46px] object-contain">
-            </header>
-
-            <!-- Table Banner -->
+<!-- Table Banner -->
             <section class="mx-4 mt-4 rounded-2xl overflow-hidden shadow-lg">
                 <div class="relative h-[214px]" style="background: url('https://api.builder.io/api/v1/image/assets/TEMP/8395f3e1d198f26b28eedeb8ed8ce22cbb79f650?width=796') lightgray 0px -92.51px / 100% 186.458% no-repeat;">
                     <div class="absolute inset-0" style="background: linear-gradient(90deg, rgba(128,0,0,0.95) 0%, rgba(128,0,0,0.80) 50%, rgba(128,0,0,0.00) 100%); width: calc(100% - 40px);"></div>
@@ -143,14 +70,14 @@
             </div>
 
             <!-- Page Numbers -->
-            <div class="flex justify-center mt-6 mb-4 gap-3">
+            <div class="flex justify-center mt-6 mb-4 gap-3 pb-24">
                 <button class="w-[25px] h-[25px] rounded-[5px] bg-white shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] font-kanit font-medium text-[17px] flex items-center justify-center" style="color: #8B2424;">1</button>
                 <button class="text-[17px] font-kanit font-medium text-black">2</button>
             </div>
 
             <!-- Floating Cart Bar -->
-            <div id="cartBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-[408px] z-40 hidden">
-                <div class="flex items-center justify-between px-6 h-16 rounded-2xl bg-maroon shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+            <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pb-4 z-50 hidden" id="cartBar">
+                <div class="flex items-center justify-between px-6 py-4 rounded-2xl bg-maroon shadow-[0_10px_30px_rgba(128,0,0,0.3)]">
                     <div class="flex items-center gap-4">
                         <div class="relative">
                             <svg width="26" height="23" viewBox="0 0 26 23" fill="none">
@@ -163,7 +90,7 @@
                             <p class="text-white text-lg font-bold leading-7" id="cartTotal">Rp 0</p>
                         </div>
                     </div>
-                    <button class="flex items-center gap-2 px-6 py-3 rounded-xl" style="background-color: rgba(255, 240, 238, 0.3);" onclick="checkout()">
+                    <button class="flex items-center gap-2 px-6 py-3 rounded-xl" style="background-color: rgba(255, 240, 238, 0.3);" onclick="window.location.href='./index.php?page=keranjang'">
                         <span class="text-base font-bold text-white">Check out</span>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M12.175 9H0V7H12.175L6.575 1.4L8 0L16 8L8 16L6.575 14.6L12.175 9Z" fill="white"/>
@@ -171,9 +98,4 @@
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <script src="script.js"></script>
-</body>
-</html>
