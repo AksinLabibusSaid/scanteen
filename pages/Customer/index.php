@@ -43,7 +43,7 @@ $innerClass = 'w-full max-w-[430px] relative';
     <div class="<?php echo htmlspecialchars($outerClass, ENT_QUOTES, 'UTF-8'); ?>">
         <div class="<?php echo htmlspecialchars($innerClass, ENT_QUOTES, 'UTF-8'); ?>">
 
-            <?php include __DIR__ . '/partials/header.php'; ?>
+            <?php include __DIR__ . '/component/header.php'; ?>
 
             <?php include $contentFile; ?>
 
