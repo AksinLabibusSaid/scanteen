@@ -14,10 +14,10 @@ $activePage = $activePage ?? 'dashboard';
             </div>
             <!-- Logo Text -->
             <div class="flex flex-col justify-center" style="gap: 0.5px;">
-                <h1 class="text-[#991B1B] text-lg font-black leading-[22.5px]">
+                <h1 class="text-[var(--brand)] text-lg font-black leading-[22.5px]">
                     Scanteen
                 </h1>
-                <p class="text-[#675C5C] text-[10px] font-bold leading-[15px] tracking-[1px] uppercase">
+                <p class="text-[var(--brand)] text-[10px] font-bold leading-[15px] tracking-[1px] uppercase">
                     Panel Warung
                 </p>
             </div>
@@ -29,10 +29,10 @@ $activePage = $activePage ?? 'dashboard';
             <a href="?page=dashboard"
                class="<?= $activePage === 'dashboard' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 8h8V0H0v8zm2-6h4v4H2V2zm8-2v8h8V0h-8zm6 6h-4V2h4v4zM0 18h8v-8H0v8zm2-6h4v4H2v-4zm8 0v8h8v-8h-8zm6 6h-4v-4h4v4z"
-                          fill="<?= $activePage === 'dashboard' ? '#991B1B' : '#6B7280' ?>"/>
+                    <path d="M10 6V0H18V6H10ZM0 10V0H8V10H0ZM10 18V8H18V18H10ZM0 18V12H8V18H0ZM2 8H6V2H2V8ZM12 16H16V10H12V16ZM12 4H16V2H12V4ZM2 16H6V14H2V16Z"
+                          fill="<?= $activePage === 'dashboard' ? 'var(--brand)' : '#6B7280' ?>"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5 <?= $activePage === 'dashboard' ? 'text-[#991B1B]' : '' ?>">Overview</span>
+                <span class="font-semibold text-sm leading-5">Overview</span>
             </a>
 
             <!-- Orders -->
@@ -40,9 +40,9 @@ $activePage = $activePage ?? 'dashboard';
                class="<?= $activePage === 'orders' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 2h12l2 4H4l2-4zm14 16H4V8h16v12zm-8-9a3 3 0 0 1-3-3V7h2v1a1 1 0 0 0 2 0V7h2v1a3 3 0 0 1-3 3z"
-                          fill="<?= $activePage === 'orders' ? '#991B1B' : '#6B7280' ?>"/>
+                          fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5 <?= $activePage === 'orders' ? 'text-[#991B1B]' : '' ?>">Orders</span>
+                <span class="font-semibold text-sm leading-5">Orders</span>
             </a>
 
             <!-- Menu Manager -->
@@ -50,10 +50,10 @@ $activePage = $activePage ?? 'dashboard';
                class="<?= $activePage === 'menu' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                          fill="<?= $activePage === 'menu' ? '#991B1B' : '#6B7280' ?>"/>
-                    <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? '#991B1B' : '#6B7280' ?>" opacity="0.4"/>
+                          fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.4"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5 <?= $activePage === 'menu' ? 'text-[#991B1B]' : '' ?>">Menu Manager</span>
+                <span class="font-semibold text-sm leading-5">Menu Manager</span>
             </a>
 
             <!-- History & Laporan -->
@@ -61,12 +61,12 @@ $activePage = $activePage ?? 'dashboard';
                class="<?= $activePage === 'history' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                          fill="<?= $activePage === 'history' ? '#991B1B' : '#6B7280' ?>"/>
-                    <rect x="7" y="13" width="2" height="5" fill="<?= $activePage === 'history' ? '#991B1B' : '#6B7280' ?>" opacity="0.3"/>
-                    <rect x="10" y="11" width="2" height="7" fill="<?= $activePage === 'history' ? '#991B1B' : '#6B7280' ?>" opacity="0.3"/>
-                    <rect x="13" y="15" width="2" height="3" fill="<?= $activePage === 'history' ? '#991B1B' : '#6B7280' ?>" opacity="0.3"/>
+                          fill="<?= $activePage === 'history' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    <rect x="7" y="13" width="2" height="5" fill="<?= $activePage === 'history' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.3"/>
+                    <rect x="10" y="11" width="2" height="7" fill="<?= $activePage === 'history' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.3"/>
+                    <rect x="13" y="15" width="2" height="3" fill="<?= $activePage === 'history' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.3"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5 <?= $activePage === 'history' ? 'text-[#991B1B]' : '' ?>">Riwayat</span>
+                <span class="font-semibold text-sm leading-5">Riwayat</span>
             </a>
 
         </nav>

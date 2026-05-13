@@ -5,12 +5,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Daftar halaman yang diizinkan untuk Warung
+// Daftar halaman yang diizinkan untuk Admin
 $allowedPages = [
     'dashboard' => __DIR__ . '/content/dashboard.php',
     'orders'    => __DIR__ . '/content/orders.php',
-    'menu'      => __DIR__ . '/content/menu.php',
-    'history'   => __DIR__ . '/content/history.php',
+    'tenants'   => __DIR__ . '/content/tenants.php',
+    'menus'     => __DIR__ . '/content/menus.php',
+    'users'     => __DIR__ . '/content/users.php',
+    'tables'    => __DIR__ . '/content/tables.php',
+    'reports'   => __DIR__ . '/content/reports.php',
+    'settings'  => __DIR__ . '/content/settings.php',
 ];
 
 $pageKey = isset($_GET['page']) ? (string) $_GET['page'] : 'dashboard';
@@ -22,10 +26,14 @@ $activePage  = $pageKey;
 $contentFile = $allowedPages[$pageKey];
 
 $pageTitle = match($pageKey) {
-    'orders'   => 'Pesanan',
-    'menu'     => 'Manajemen Menu',
-    'history'  => 'Riwayat',
-    default    => 'Overview',
+    'orders'   => 'Order Management',
+    'tenants'  => 'Tenant Management',
+    'menus'    => 'Menu Management',
+    'users'    => 'User Management',
+    'tables'   => 'Table Management',
+    'reports'  => 'Reports',
+    'settings' => 'System Settings',
+    default    => 'Dashboard',
 };
 ?>
 <!DOCTYPE html>
@@ -33,7 +41,7 @@ $pageTitle = match($pageKey) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> — Scanteen Warung</title>
+    <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> — Scanteen Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,3 +132,4 @@ $pageTitle = match($pageKey) {
 
 </body>
 </html>
+
