@@ -516,3 +516,200 @@ body[data-page="status"] .item-note {
     padding: 16px;
   }
 }
+
+/* ===== Themed error / info modal (ScanteenUi.showError) ===== */
+.scanteen-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(26, 28, 26, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: scanteen-fade-in 0.2s ease-out;
+}
+
+@keyframes scanteen-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.scanteen-modal {
+  width: 100%;
+  max-width: 22rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow:
+    0 25px 50px -12px rgba(128, 0, 0, 0.2),
+    0 0 0 1px rgba(128, 0, 0, 0.06);
+  animation: scanteen-pop 0.22s ease-out;
+}
+
+@keyframes scanteen-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.scanteen-modal__accent {
+  height: 4px;
+  background: linear-gradient(90deg, #800000 0%, #b91c1c 50%, #800000 100%);
+}
+
+.scanteen-modal__title {
+  margin: 0;
+  padding: 1.25rem 1.25rem 0.5rem;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--primary-dark);
+}
+
+.scanteen-modal__message {
+  margin: 0;
+  padding: 0 1.25rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-label);
+}
+
+.scanteen-modal__detail {
+  margin: 0 1rem 1rem;
+  padding: 0.75rem 0.875rem;
+  max-height: 8rem;
+  overflow: auto;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #57534e;
+  background: #faf9f6;
+  border: 1px solid var(--border-divider);
+  border-radius: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.scanteen-modal__btn {
+  display: block;
+  width: calc(100% - 2rem);
+  margin: 0 1rem 1.25rem;
+  padding: 0.875rem 1rem;
+  border: none;
+  border-radius: 0.875rem;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  color: #fff;
+  background: #7b0009;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(123, 0, 9, 0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.scanteen-modal__btn:hover {
+  background: #6a0008;
+}
+
+.scanteen-modal__btn:active {
+  transform: scale(0.98);
+}
+
+/* ===== Gate: hanya ponsel / tablet (bukan desktop laptop mouse) ===== */
+.customer-device-gate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(26, 28, 26, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.customer-device-gate:not([hidden]) {
+  display: flex;
+}
+
+.customer-device-gate__panel {
+  width: 100%;
+  max-width: 22rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow:
+    0 25px 50px -12px rgba(128, 0, 0, 0.25),
+    0 0 0 1px rgba(128, 0, 0, 0.08);
+  text-align: center;
+}
+
+.customer-device-gate__accent {
+  height: 4px;
+  background: linear-gradient(90deg, #800000 0%, #b91c1c 50%, #800000 100%);
+}
+
+.customer-device-gate__icon {
+  padding: 1.25rem 0 0.25rem;
+}
+
+.customer-device-gate__title {
+  margin: 0;
+  padding: 0 1.25rem 0.5rem;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  line-height: 1.35;
+}
+
+.customer-device-gate__text {
+  margin: 0;
+  padding: 0 1.35rem 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-label);
+}
+
+.customer-device-gate__text strong {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.customer-device-gate__hint {
+  margin: 0;
+  padding: 0 1.35rem 1.35rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #78716c;
+}
+
+body.customer-device-gate--open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+@media print {
+  .customer-device-gate {
+    display: none !important;
+  }
+
+  body.customer-device-gate--open {
+    overflow: visible;
+    touch-action: auto;
+  }
+}

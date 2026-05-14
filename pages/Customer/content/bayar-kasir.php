@@ -1,3 +1,24 @@
+<?php
+declare(strict_types=1);
+
+use App\Customer\OrderUi;
+use App\Support\Money;
+
+if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
+    header('Location: ../index.php?page=bayar-kasir');
+    exit;
+}
+
+$ord = $customerOrder ?? null;
+$tok = $ord !== null ? (string) $ord['public_token'] : '';
+$secs = $ord !== null ? OrderUi::countdownSeconds($ord['payment_deadline_at'] !== null ? (string) $ord['payment_deadline_at'] : null) : 900;
+$totalFmt = Money::formatIdr((float) ($ord['total'] ?? 0));
+$orderNum = htmlspecialchars((string) ($ord['order_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+$spaced = $ord !== null ? implode(' ', str_split((string) $ord['order_number'])) : '';
+$statusHref = './index.php?page=status-belum-bayar&o=' . rawurlencode($tok);
+$strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
+?>
+
   <!-- Countdown Banner -->
   <div class="customer-timer-bar flex items-center justify-center gap-2 px-5 py-3">
     <!-- Timer icon -->
@@ -9,7 +30,7 @@
     </svg>
     <span class="text-sm text-white font-normal">
       Selesaikan pembayaran dalam
-      <span class="font-bold underline tracking-wide" id="timer" data-countdown-seconds="899">14:59</span>
+      <span class="font-bold underline tracking-wide" id="timer" data-countdown-seconds="<?php echo (int) $secs; ?>">00:00</span>
     </span>
   </div>
 
@@ -23,11 +44,11 @@
       <div class="flex items-start justify-between px-5 py-5 border-b border-border-divider">
         <div class="flex flex-col gap-0.5">
           <span class="text-[10px] font-bold uppercase tracking-[1px] text-text-muted">ORDER ID</span>
-          <span class="text-lg font-bold tracking-[-0.45px] text-text-title">#ORD-1012-0004</span>
+          <span class="text-lg font-bold tracking-[-0.45px] text-text-title"><?php echo $orderNum !== '' ? $orderNum : '-'; ?></span>
         </div>
         <div class="flex flex-col gap-0.5 items-end">
           <span class="text-[10px] font-bold uppercase tracking-[1px] text-text-muted">TOTAL BAYAR</span>
-          <span class="text-lg font-bold tracking-[-0.45px] text-maroon">Rp 100.000</span>
+          <span class="text-lg font-bold tracking-[-0.45px] text-maroon"><?php echo htmlspecialchars($totalFmt, ENT_QUOTES, 'UTF-8'); ?></span>
         </div>
       </div>
 
@@ -35,7 +56,7 @@
       <div class="px-5 py-6 flex flex-col gap-0">
         <div class="customer-code-box flex flex-col items-center gap-2 px-6 py-6">
           <span class="text-[10px] font-bold uppercase tracking-[1.5px] text-text-muted">KODE PESANAN</span>
-          <span class="text-3xl font-black tracking-[6px] text-text-title mt-1"># O R D - 1 0 1 2 - 0 0 0 4</span>
+          <span class="text-3xl font-black tracking-[6px] text-text-title mt-1"><?php echo htmlspecialchars($spaced, ENT_QUOTES, 'UTF-8'); ?></span>
           <p class="text-sm text-text-muted mt-1">Tunjukkan kode ini ke kasir</p>
         </div>
       </div>
@@ -94,7 +115,7 @@
         <div class="flex items-start gap-3">
           <div class="customer-step-num shrink-0">5</div>
           <p class="text-sm text-text-dark leading-5 pt-0.5">
-            Pantau status di halaman <a href="index-single.html" class="underline-link">Lacak Pesanan</a>
+            Pantau status di halaman <a href="<?php echo htmlspecialchars($statusHref, ENT_QUOTES, 'UTF-8'); ?>" class="underline-link">Lacak Pesanan</a>
           </p>
         </div>
 
@@ -106,10 +127,10 @@
   <!-- Bottom action buttons -->
   <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 px-4 pb-4">
     <div class="flex items-center gap-3 bg-[#FAF9F6] rounded-3xl px-5 py-4 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] border border-[#EFEEEB]">
-      <button class="customer-btn-primary flex-1 !py-4 rounded-2xl" type="button" onclick="window.location.href='./index.php?page=status-belum-bayar'">
+      <button class="customer-btn-primary flex-1 !py-4 rounded-2xl" type="button" onclick="window.location.href='<?php echo htmlspecialchars($statusHref, ENT_QUOTES, 'UTF-8'); ?>'">
         Status Pesanan
       </button>
-      <button class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" onclick="window.location.href='./index.php?page=struk'" aria-label="Download" title="Download">
+      <button class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" onclick="window.location.href='<?php echo htmlspecialchars($strukHref, ENT_QUOTES, 'UTF-8'); ?>'" aria-label="Download" title="Download">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 16l-5-5h3V4h4v7h3l-5 5z" fill="#800000"/>
           <path d="M5 18h14v2H5v-2z" fill="#800000"/>

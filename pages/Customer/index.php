@@ -1,5 +1,64 @@
 <?php
+
 declare(strict_types=1);
+
+session_start();
+
+require_once dirname(__DIR__, 2) . '/config/db.php';
+
+use App\Customer\CustomerAccess;
+use App\Customer\CustomerSessionKeys;
+use App\Repositories\MenuRepository;
+use App\Repositories\OrderRepository;
+use App\Services\CartService;
+use App\Services\CartViewBuilder;
+use App\Services\CheckoutDraftService;
+
+CustomerAccess::syncTableTokenFromRequest();
+
+$customerContext = CustomerAccess::contextFromSession();
+$customerHasAccess = $customerContext !== null;
+
+$orderRepo = new OrderRepository();
+$activeOrderForBanner = null;
+$customerOrder = null;
+
+$customerCartSummary = null;
+$checkoutDraft = null;
+
+if ($customerHasAccess && $customerContext !== null) {
+    $cartSvc = new CartService();
+    $menuRepo = new MenuRepository();
+    $customerCartSummary = (new CartViewBuilder($menuRepo, $cartSvc))->summarize($customerContext);
+    $checkoutDraft = (new CheckoutDraftService())->get();
+
+    $activeOrderForBanner = $orderRepo->findLatestTrackableForTable($customerContext->diningTableId);
+
+    $customerOrder = null;
+    $tok = '';
+    if (isset($_GET['o']) && is_string($_GET['o']) && strlen(trim($_GET['o'])) === 32) {
+        $tok = trim($_GET['o']);
+        $o = $orderRepo->findByPublicToken($tok);
+        if ($o !== null && (int) $o['dining_table_id'] === $customerContext->diningTableId) {
+            $_SESSION[CustomerSessionKeys::LAST_ORDER_TOKEN] = $tok;
+            $customerOrder = $o;
+        }
+    }
+    if ($customerOrder === null) {
+        $tok = $_SESSION[CustomerSessionKeys::LAST_ORDER_TOKEN] ?? '';
+        if (is_string($tok) && strlen($tok) === 32) {
+            $o = $orderRepo->findByPublicToken($tok);
+            if ($o !== null && (int) $o['dining_table_id'] === $customerContext->diningTableId) {
+                $customerOrder = $o;
+            }
+        }
+    }
+}
+
+$customerOrderGroups = null;
+if ($customerOrder !== null) {
+    $customerOrderGroups = $orderRepo->groupItemsByWarung((int) $customerOrder['id']);
+}
 
 $allowedPages = [
     'home' => __DIR__ . '/content/home.php',
@@ -11,19 +70,59 @@ $allowedPages = [
     'status-belum-bayar' => __DIR__ . '/content/status-belum-bayar.php',
     'status-sudah-bayar' => __DIR__ . '/content/status-sudah-bayar.php',
     'struk' => __DIR__ . '/content/struk.php',
-    
-    /* Alias untuk compatibility */
     'pembayaran' => __DIR__ . '/content/bayar-kasir.php',
     'status' => __DIR__ . '/content/status-belum-bayar.php',
     'pesanan' => __DIR__ . '/content/checkout.php',
 ];
 
 $pageKey = isset($_GET['page']) ? (string) $_GET['page'] : 'home';
+if ($pageKey === 'bayar-midtrans') {
+    header('Location: ./index.php?page=pilih-pembayaran');
+    exit;
+}
 if (!array_key_exists($pageKey, $allowedPages)) {
     $pageKey = 'home';
 }
 
-$contentFile = $allowedPages[$pageKey];
+if (!$customerHasAccess) {
+    $pageKey = 'need-scan';
+    $contentFile = __DIR__ . '/content/need-scan.php';
+} else {
+    $orderLockedPages = [
+        'bayar-kasir',
+        'bayar-qris',
+        'status-belum-bayar',
+        'status-sudah-bayar',
+        'struk',
+        'pembayaran',
+        'status',
+    ];
+    if (in_array($pageKey, $orderLockedPages, true) && $customerOrder === null) {
+        header('Location: ./index.php?page=home');
+        exit;
+    }
+
+    if ($customerOrder !== null) {
+        $st = (string) $customerOrder['status'];
+        $o = rawurlencode((string) $customerOrder['public_token']);
+        if ($pageKey === 'status-sudah-bayar' && $st === 'pending_payment') {
+            header('Location: ./index.php?page=status-belum-bayar&o=' . $o);
+            exit;
+        }
+        if ($pageKey === 'status-belum-bayar' && $st !== 'pending_payment') {
+            header('Location: ./index.php?page=status-sudah-bayar&o=' . $o);
+            exit;
+        }
+        if (in_array($pageKey, ['bayar-kasir', 'bayar-qris', 'bayar-midtrans', 'pembayaran'], true) && $st !== 'pending_payment') {
+            header('Location: ./index.php?page=status-sudah-bayar&o=' . $o);
+            exit;
+        }
+    }
+
+    $contentFile = $allowedPages[$pageKey];
+}
+
+$customerApiRoot = '../../api/customer';
 
 $bodyClass = '';
 $outerClass = 'min-h-screen flex justify-center bg-[#FAF9F6]';
@@ -37,9 +136,33 @@ $innerClass = 'w-full max-w-[430px] relative';
     <title>Scanteen - Customer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/customer.css">
+    <link rel="stylesheet" href="/scanteen/assets/css/customer.css">
 </head>
-<body class="<?php echo htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8'); ?>" data-page="<?php echo htmlspecialchars($pageKey, ENT_QUOTES, 'UTF-8'); ?>">
+<body
+    class="customer-body <?php echo htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8'); ?>"
+    data-page="<?php echo htmlspecialchars($pageKey, ENT_QUOTES, 'UTF-8'); ?>"
+    data-api-root="<?php echo htmlspecialchars($customerApiRoot, ENT_QUOTES, 'UTF-8'); ?>"
+>
+    <div id="customer-device-gate" class="customer-device-gate" role="dialog" aria-modal="true" aria-labelledby="customer-device-gate-title" hidden>
+        <div class="customer-device-gate__panel">
+            <div class="customer-device-gate__accent" aria-hidden="true"></div>
+            <div class="customer-device-gate__icon" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6h16v12H4V6zm2 2v8h12V8H6z" fill="#800000" opacity=".9"/>
+                    <path d="M8 4h8v2H8V4z" fill="#800000"/>
+                </svg>
+            </div>
+            <h1 id="customer-device-gate-title" class="customer-device-gate__title">Gunakan ponsel atau tablet</h1>
+            <p class="customer-device-gate__text">
+                Tampilan pelanggan Scanteen diperuntukkan untuk <strong>smartphone</strong>, <strong>tablet</strong>, atau <strong>iPad</strong>.
+                Silakan buka tautan yang sama dari perangkat tersebut.
+            </p>
+            <p class="customer-device-gate__hint">
+                Jika Anda di laptop atau PC, gunakan mode perangkat (DevTools) hanya untuk pengujian, atau perkecil lebar jendela browser.
+            </p>
+        </div>
+    </div>
+    <div class="customer-app-shell" id="customer-app-shell">
     <div class="<?php echo htmlspecialchars($outerClass, ENT_QUOTES, 'UTF-8'); ?>">
         <div class="<?php echo htmlspecialchars($innerClass, ENT_QUOTES, 'UTF-8'); ?>">
 
@@ -49,7 +172,8 @@ $innerClass = 'w-full max-w-[430px] relative';
 
         </div>
     </div>
+    </div>
 
-    <script src="../../assets/js/customer.js"></script>
+    <script src="/scanteen/assets/js/customer.js"></script>
 </body>
 </html>

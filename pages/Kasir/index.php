@@ -5,6 +5,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/app/Staff/staff_portal_guard.php';
+scanteen_staff_require_portal('kasir');
+
 // Daftar halaman yang diizinkan untuk Kasir
 $allowedPages = [
     'dashboard' => __DIR__ . '/content/dashboard.php',

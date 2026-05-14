@@ -1,8 +1,11 @@
 <?php
-// Ambil data session kasir jika tersedia
-$kasirName = $_SESSION['nama'] ?? 'Budi Santoso';
-$kasirTerminal = $_SESSION['terminal'] ?? 'Terminal 01';
-$kasirAvatar = $_SESSION['foto'] ?? 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
+declare(strict_types=1);
+
+use App\Staff\StaffAuth;
+
+$kasirName = StaffAuth::check() ? StaffAuth::userName() : 'Kasir';
+$kasirTerminal = 'Kasir — venue #' . (StaffAuth::venueId() ?? '-');
+$kasirAvatar = 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
 ?>
 <!-- Header -->
 <header class="w-full h-16 px-6 flex items-center justify-between border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
@@ -51,6 +54,7 @@ $kasirAvatar = $_SESSION['foto'] ?? 'https://api.builder.io/api/v1/image/assets/
             <div class="w-10 h-10 rounded-full border-2 border-[var(--brand-soft)] overflow-hidden flex-shrink-0">
                 <img src="<?= htmlspecialchars($kasirAvatar) ?>" alt="Cashier Profile" class="w-full h-full object-cover">
             </div>
+            <a href="/scanteen/pages/staff/logout.php" class="text-xs font-bold text-[var(--brand)] hover:underline">Keluar</a>
         </div>
 
     </div>

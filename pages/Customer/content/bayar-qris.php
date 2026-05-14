@@ -1,3 +1,23 @@
+<?php
+declare(strict_types=1);
+
+use App\Customer\OrderUi;
+use App\Support\Money;
+
+if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
+    header('Location: ../index.php?page=bayar-qris');
+    exit;
+}
+
+$ord = $customerOrder ?? null;
+$tok = $ord !== null ? (string) $ord['public_token'] : '';
+$secs = $ord !== null ? OrderUi::countdownSeconds($ord['payment_deadline_at'] !== null ? (string) $ord['payment_deadline_at'] : null) : 900;
+$totalFmt = Money::formatIdr((float) ($ord['total'] ?? 0));
+$orderNum = htmlspecialchars((string) ($ord['order_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+$statusHref = './index.php?page=status-belum-bayar&o=' . rawurlencode($tok);
+$strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
+?>
+
 <!-- Scrollable content -->
 <main class="flex-1 flex flex-col gap-6 px-4 pt-5 pb-32">
     <!-- Countdown banner -->
@@ -7,7 +27,7 @@
         </svg>
         <span class="text-sm text-white font-semibold">
             Selesaikan pembayaran dalam
-            <span id="countdown-qris" class="font-bold underline ml-1">14:59</span>
+            <span id="countdown-qris" class="font-bold underline ml-1" data-countdown-seconds="<?php echo (int) $secs; ?>">00:00</span>
         </span>
     </div>
 
@@ -20,7 +40,7 @@
                     ORDER ID
                 </span>
                 <span class="font-inter text-[#261817] text-base font-bold leading-6">
-                    #ORD-1012-0004
+                    <?php echo $orderNum !== '' ? $orderNum : '-'; ?>
                 </span>
             </div>
             <div class="flex flex-col gap-1 items-end">
@@ -28,7 +48,7 @@
                     TOTAL BAYAR
                 </span>
                 <span class="font-inter text-[#7B0009] text-base font-semibold leading-6">
-                    Rp 100.000
+                    <?php echo htmlspecialchars($totalFmt, ENT_QUOTES, 'UTF-8'); ?>
                 </span>
             </div>
         </div>
@@ -117,12 +137,12 @@
 <!-- Bottom Action Bar -->
 <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 px-4 pb-4">
     <div class="flex items-center gap-3 bg-[#FAF9F6] rounded-3xl px-5 py-4 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] border border-[#EFEEEB]">
-        <button class="flex-1 py-4 rounded-2xl bg-[#7B0009] flex items-center justify-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] hover:bg-[#6a0007] transition-all active:scale-[0.98]" onclick="window.location.href='./index.php?page=status-belum-bayar'">
+        <button class="flex-1 py-4 rounded-2xl bg-[#7B0009] flex items-center justify-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.10)] hover:bg-[#6a0007] transition-all active:scale-[0.98]" onclick="window.location.href='<?php echo htmlspecialchars($statusHref, ENT_QUOTES, 'UTF-8'); ?>'">
             <span class="font-inter text-white text-base font-bold leading-6">
                 Status pesanan
             </span>
         </button>
-        <button class="w-14 h-14 flex-shrink-0 rounded-2xl border-2 border-[#9E1C1C] flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.95]" onclick="window.location.href='./index.php?page=struk'">
+        <button class="w-14 h-14 flex-shrink-0 rounded-2xl border-2 border-[#9E1C1C] flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.95]" onclick="window.location.href='<?php echo htmlspecialchars($strukHref, ENT_QUOTES, 'UTF-8'); ?>'">
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8.48046 12.3109L2.80216 6.63259L4.66849 4.74452L7.15544 7.24561V0H9.80548V7.24561L12.2924 4.74452L14.1588 6.63259L8.48046 12.3109ZM2.65003 16.9609C1.91162 16.9609 1.28534 16.7039 0.771205 16.1897C0.257068 15.6756 0 15.0493 0 14.3109V11.3109H2.65003V14.3109H14.3109V11.3109H16.9609V14.3109C16.9609 15.0493 16.7039 15.6756 16.1897 16.1897C15.6756 16.7039 15.0493 16.9609 14.3109 16.9609H2.65003Z" fill="#9E1C1C"/>
             </svg>
@@ -130,28 +150,3 @@
     </div>
 </div>
 
-<script>
-    function updateCountdownQris() {
-        const countdownElement = document.getElementById('countdown-qris');
-        if (!countdownElement) return;
-        let totalSeconds = 14 * 60 + 59;
-
-        const interval = setInterval(() => {
-            if (totalSeconds <= 0) {
-                clearInterval(interval);
-                countdownElement.textContent = '00:00';
-                return;
-            }
-
-            totalSeconds--;
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            countdownElement.textContent = 
-                String(minutes).padStart(2, '0') + ':' + 
-                String(seconds).padStart(2, '0');
-        }, 1000);
-    }
-
-    // Start countdown on page load
-    document.addEventListener('DOMContentLoaded', updateCountdownQris);
-</script>

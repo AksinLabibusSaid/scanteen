@@ -1,3 +1,16 @@
+<?php
+declare(strict_types=1);
+
+use App\Customer\OrderUi;
+
+if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
+    header('Location: ../index.php?page=home');
+    exit;
+}
+
+$bannerOrder = $activeOrderForBanner ?? null;
+?>
+
 <!-- Table Banner -->
             <section class="mx-4 mt-4 rounded-2xl overflow-hidden shadow-lg">
                 <div class="relative h-[214px]" style="background: url('https://api.builder.io/api/v1/image/assets/TEMP/8395f3e1d198f26b28eedeb8ed8ce22cbb79f650?width=796') lightgray 0px -92.51px / 100% 186.458% no-repeat;">
@@ -8,7 +21,7 @@
                         </div>
                     </div>
                     <div class="absolute left-8 top-[71px]">
-                        <span class="text-white text-[30px] font-normal leading-9">Kamu di Meja 12</span>
+                        <span class="text-white text-[30px] font-normal leading-9">Kamu di Meja <?php echo htmlspecialchars($customerContext->tableNumber, ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
                     <div class="absolute left-8 top-[107px] max-w-[294px]">
                         <p class="text-[#FFD4CD] text-base leading-6">Nikmati kemudahan memesan makanan favoritmu langsung dari meja ini.</p>
@@ -17,6 +30,11 @@
             </section>
 
             <!-- Active Order Status -->
+            <?php if ($bannerOrder !== null) {
+                $bst = (string) $bannerOrder['status'];
+                $detailPage = $bst === 'pending_payment' ? 'status-belum-bayar' : 'status-sudah-bayar';
+                $detailHref = './index.php?page=' . $detailPage . '&o=' . rawurlencode((string) $bannerOrder['public_token']);
+                ?>
             <div class="mx-4 mt-4 flex items-center justify-between px-4 py-4 rounded-2xl border shadow-sm" style="border-color: #E2BFB9; background-color: rgba(255, 240, 238, 0.5);">
                 <div class="flex items-center gap-4">
                     <div class="flex items-center justify-center w-[39px] h-12 rounded-xl flex-shrink-0" style="background-color: #FFDAD4;">
@@ -25,17 +43,18 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-[#261816] text-base">Order #ORD-1012-0004</p>
+                        <p class="text-[#261816] text-base">Order <?php echo htmlspecialchars((string) $bannerOrder['order_number'], ENT_QUOTES, 'UTF-8'); ?></p>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: #B30B0B;"></span>
-                            <span class="text-[#261816] text-base font-medium">Diterima</span>
+                            <span class="text-[#261816] text-base font-medium"><?php echo htmlspecialchars(OrderUi::statusLabel($bst), ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                     </div>
                 </div>
-                <button class="px-6 py-2 rounded-xl border bg-white" style="color: #570000; border-color: #8E706C;" onclick="alert('Lihat order detail')">
+                <a href="<?php echo htmlspecialchars($detailHref, ENT_QUOTES, 'UTF-8'); ?>" class="px-6 py-2 rounded-xl border bg-white inline-block" style="color: #570000; border-color: #8E706C;">
                     Lihat
-                </button>
+                </a>
             </div>
+            <?php } ?>
 
             <!-- Search Bar -->
             <div class="mx-4 mt-4">

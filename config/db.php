@@ -1,30 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Database Configuration
- * Koneksi database menggunakan PHP Native (MySQLi)
+ * Database configuration + koneksi tunggal (mysqli).
  */
 
-// Konfigurasi Database
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'scanteen');
 
-// Koneksi ke Database
-try {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+/** Set true di lingkungan dev untuk tombol simulasi pembayaran customer. */
+define('SCANTEEN_CUSTOMER_SIMULATE_PAYMENT', true);
 
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+require_once dirname(__DIR__) . '/app/bootstrap.php';
 
-    // Set charset to utf8mb4
-    $conn->set_charset("utf8mb4");
-} catch (Exception $e) {
-    die("Error: " . $e->getMessage());
-}
+use App\Core\Database;
 
-// Optional: Set timezone
 date_default_timezone_set('Asia/Jakarta');
+
+try {
+    Database::boot();
+    /** @var \mysqli $conn Kompatibilitas untuk include lama */
+    $conn = Database::mysqli();
+} catch (Throwable $e) {
+    http_response_code(500);
+    exit('Database error: ' . $e->getMessage());
+}

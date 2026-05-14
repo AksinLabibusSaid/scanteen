@@ -1,24 +1,107 @@
-// Customer pages combined script (home + keranjang).
+// Customer: home (menu + cart API), keranjang/checkout helpers, countdown.
+
+const apiRoot = document.body.getAttribute("data-api-root") || "";
+
+/**
+ * Dialog error / info mengikuti tema maroon Scanteen (tanpa alert bawaan browser).
+ * @param {{ title?: string, message?: string, detail?: string }} opts
+ */
+window.ScanteenUi = window.ScanteenUi || {};
+window.ScanteenUi.showError = function (opts) {
+  const title = (opts && opts.title) || "Terjadi kesalahan";
+  const message = (opts && opts.message) || "";
+  const detail = (opts && opts.detail) || "";
+
+  const existing = document.querySelector(".scanteen-modal-backdrop");
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "scanteen-modal-backdrop";
+  backdrop.setAttribute("role", "alertdialog");
+  backdrop.setAttribute("aria-modal", "true");
+  backdrop.setAttribute("aria-labelledby", "scanteen-modal-title");
+
+  const panel = document.createElement("div");
+  panel.className = "scanteen-modal";
+  panel.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
+  const accent = document.createElement("div");
+  accent.className = "scanteen-modal__accent";
+
+  const h = document.createElement("h3");
+  h.id = "scanteen-modal-title";
+  h.className = "scanteen-modal__title";
+  h.textContent = title;
+
+  const p = document.createElement("p");
+  p.className = "scanteen-modal__message";
+  p.textContent = message || "Silakan coba lagi. Jika masalah berlanjut, hubungi petugas kantin.";
+
+  panel.appendChild(accent);
+  panel.appendChild(h);
+  panel.appendChild(p);
+
+  if (detail) {
+    const pre = document.createElement("pre");
+    pre.className = "scanteen-modal__detail";
+    pre.textContent = detail;
+    panel.appendChild(pre);
+  }
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "scanteen-modal__btn";
+  btn.textContent = "Mengerti";
+  btn.addEventListener("click", close);
+  panel.appendChild(btn);
+
+  function close() {
+    backdrop.remove();
+    document.removeEventListener("keydown", onKey);
+  }
+
+  function onKey(e) {
+    if (e.key === "Escape") close();
+  }
+  document.addEventListener("keydown", onKey);
+
+  backdrop.addEventListener("click", function (e) {
+    if (e.target === backdrop) close();
+  });
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+  btn.focus();
+};
 
 // ===== HOME (menu) =====
-const menuItems = [
-  { id: 1, name: "Wader Goreng", price: 25000, warung: "Warung 1", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-  { id: 2, name: "Soto Babat", price: 25000, warung: "Warung 1", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-  { id: 3, name: "Mie Instan", price: 25000, warung: "Warung 1", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-  { id: 4, name: "Rawon Jumbo", price: 25000, warung: "Warung 2", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-  { id: 5, name: "Bubur Ayam", price: 25000, warung: "Warung 2", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-  { id: 6, name: "Nasi Kuning Tel..", price: 25000, warung: "Warung 2", image: "https://api.builder.io/api/v1/image/assets/TEMP/0047a570799b8fcb285774402e9e0c783c5d4046?width=380" },
-];
-
-const warungTabs = ["Semua", "Warung 1", "Warung 2", "Warung 3 "];
-const categoryTabs = ["Semua", "Makanan", "Minuman", "Jajanan"];
-
+let menuItems = [];
+let warungTabs = [];
+let categoryTabs = [];
 let activeWarung = "Semua";
 let activeCategory = "Semua";
-let cart = new Set([1, 3, 4]);
+/** Ringkasan cart dari server */
+let cartSummary = { itemCount: 0, subtotal: 0 };
 
 function formatRupiah(amount) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+}
+
+async function fetchJson(url, options) {
+  const res = await fetch(url, { credentials: "same-origin", ...options });
+  return res.json();
+}
+
+async function refreshCart() {
+  if (!apiRoot) return;
+  const data = await fetchJson(apiRoot + "/cart.php", { method: "GET" });
+  if (!data.ok) return;
+  cartSummary = {
+    itemCount: data.cart?.itemCount ?? 0,
+    subtotal: data.cart?.subtotal ?? 0,
+  };
 }
 
 function initTabs() {
@@ -72,7 +155,13 @@ function renderMenuItems() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  menuItems.forEach((item) => {
+  const filtered = menuItems.filter((item) => {
+    const okWarung = activeWarung === "Semua" || item.warung === activeWarung;
+    const okCat = activeCategory === "Semua" || item.category === activeCategory;
+    return okWarung && okCat;
+  });
+
+  filtered.forEach((item) => {
     const card = document.createElement("div");
     card.className = "rounded-[20px] bg-white shadow-[3px_3px_15px_0_rgba(0,0,0,0.15)] overflow-hidden";
 
@@ -82,9 +171,9 @@ function renderMenuItems() {
           <p class="text-base font-bold text-black font-plus-jakarta leading-tight">${item.name}</p>
           <p class="text-xs text-[#919191] mt-0.5">${item.warung}</p>
           <p class="text-sm font-semibold text-maroon font-plus-jakarta mt-1">${formatRupiah(item.price)}</p>
-          <button class="mt-2 w-[132px] h-[26px] rounded-[20px] text-[10px] font-semibold font-plus-jakarta transition-all"
+          <button type="button" class="mt-2 w-[132px] h-[26px] rounded-[20px] text-[10px] font-semibold font-plus-jakarta transition-all menu-add-btn"
               style="background-color: #8B2424; color: white; border: 1px solid transparent;"
-              onclick="handleAddClick(this, ${item.id})">
+              data-menu-id="${item.id}">
               Tambah
           </button>
       </div>
@@ -92,13 +181,30 @@ function renderMenuItems() {
 
     grid.appendChild(card);
   });
+
+  grid.querySelectorAll(".menu-add-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleAddClick(btn, parseInt(btn.getAttribute("data-menu-id") || "0", 10)));
+  });
 }
 
-function handleAddClick(button, itemId) {
+async function handleAddClick(button, itemId) {
+  if (!apiRoot || !itemId) return;
   flashButton(button);
-  if (!cart.has(itemId)) {
-    cart.add(itemId);
+  try {
+    const r = await fetchJson(apiRoot + "/cart.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add", menu_id: itemId, qty: 1, note: "" }),
+    });
+    if (!r.ok) {
+      alert(r.error || "Gagal menambah ke keranjang");
+      return;
+    }
+    await refreshCart();
     updateCart();
+  } catch (e) {
+    console.error(e);
+    alert("Gagal menambah ke keranjang");
   }
 
   setTimeout(() => {
@@ -121,22 +227,42 @@ function updateCart() {
   const totalDisplay = document.getElementById("cartTotal");
   if (!cartBar || !countBadge || !itemsLabel || !totalDisplay) return;
 
-  const cartCount = cart.size;
-  const cartTotal = Array.from(cart).reduce((sum, id) => {
-    const item = menuItems.find((m) => m.id === id);
-    return sum + (item ? item.price : 0);
-  }, 0);
+  const cartCount = cartSummary.itemCount;
+  const cartTotal = cartSummary.subtotal;
 
   if (cartCount === 0) cartBar.classList.add("hidden");
   else {
     cartBar.classList.remove("hidden");
-    countBadge.textContent = cartCount;
+    countBadge.textContent = String(cartCount);
     itemsLabel.textContent = `${cartCount} ITEMS`;
     totalDisplay.textContent = formatRupiah(cartTotal);
   }
 }
 
-// ===== KERANJANG (cart page) =====
+async function bootHomeMenu() {
+  const grid = document.getElementById("menuGrid");
+  if (!grid || !apiRoot) return;
+
+  try {
+    const mData = await fetchJson(apiRoot + "/menus.php", { method: "GET" });
+    if (!mData.ok) {
+      grid.innerHTML = `<p class="col-span-2 text-center text-sm text-gray-500 px-4">${mData.error || "Gagal memuat menu."}</p>`;
+      return;
+    }
+    menuItems = mData.menus || [];
+    warungTabs = mData.warung_tabs || ["Semua"];
+    categoryTabs = mData.category_tabs || ["Semua"];
+    await refreshCart();
+    initTabs();
+    renderMenuItems();
+    updateCart();
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML = `<p class="col-span-2 text-center text-sm text-red-600 px-4">Tidak dapat memuat menu. Periksa koneksi.</p>`;
+  }
+}
+
+// ===== KERANJANG (legacy steppers — halaman keranjang utama memakai PHP) =====
 function incrementQuantity(btn) {
   const stepper = btn.closest(".stepper");
   const valueElement = stepper?.querySelector(".stepper-value");
@@ -199,16 +325,12 @@ function updateTotal() {
   if (totalElement) totalElement.textContent = "Rp " + total.toLocaleString("id-ID");
 }
 
-// ===== Shared checkout handler =====
 function checkout() {
-  // requirement: from home checkout -> go to keranjang page
   const isHome = !!document.getElementById("menuGrid");
   if (isHome) {
     window.location.href = "./index.php?page=keranjang";
     return;
   }
-
-  // On keranjang page -> go to pesanan page
   window.location.href = "./index.php?page=pesanan";
 }
 
@@ -236,25 +358,68 @@ function startCountdownFromElement(timerEl) {
   }, 1000);
 }
 
+/**
+ * Tampilan pelanggan diperuntukkan ponsel / tablet. Desktop / laptop (lebar >= 1024px,
+ * pointer presisi, hover) diblokir; jendela diperkecil atau DevTools device mode tetap bisa uji.
+ */
+function enforceCustomerDeviceGate() {
+  const gate = document.getElementById("customer-device-gate");
+  const shell = document.getElementById("customer-app-shell");
+  if (!gate || !shell) return;
+
+  const w = window.innerWidth;
+  const fine = window.matchMedia("(pointer: fine)").matches;
+  const hover = window.matchMedia("(hover: hover)").matches;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+
+  const block = w >= 1024 && fine && hover && !coarse;
+
+  if (block) {
+    gate.removeAttribute("hidden");
+    shell.setAttribute("inert", "");
+    shell.setAttribute("aria-hidden", "true");
+    document.body.classList.add("customer-device-gate--open");
+  } else {
+    gate.setAttribute("hidden", "");
+    shell.removeAttribute("inert");
+    shell.removeAttribute("aria-hidden");
+    document.body.classList.remove("customer-device-gate--open");
+  }
+}
+
+let customerDeviceGateResizeTimer = 0;
+function scheduleCustomerDeviceGateRefresh() {
+  window.clearTimeout(customerDeviceGateResizeTimer);
+  customerDeviceGateResizeTimer = window.setTimeout(() => {
+    enforceCustomerDeviceGate();
+  }, 120);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // init home if elements exist
+  enforceCustomerDeviceGate();
+  window.addEventListener("resize", scheduleCustomerDeviceGateRefresh);
+  window.addEventListener("orientationchange", scheduleCustomerDeviceGateRefresh);
+
   if (document.getElementById("menuGrid")) {
-    initTabs();
-    renderMenuItems();
-    updateCart();
+    bootHomeMenu();
 
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
       searchInput.addEventListener("input", (e) => {
-        console.log("Search:", e.target.value);
+        const q = (e.target.value || "").toLowerCase();
+        const grid = document.getElementById("menuGrid");
+        if (!grid) return;
+        grid.querySelectorAll(":scope > div").forEach((card) => {
+          const text = card.textContent?.toLowerCase() || "";
+          card.style.display = text.includes(q) ? "" : "none";
+        });
       });
     }
   }
 
-  // ===== KERANJANG UI toggles (dining + payment) =====
   const dineInBtn = document.getElementById("dineInBtn");
   const takeAwayBtn = document.getElementById("takeAwayBtn");
-  if (dineInBtn && takeAwayBtn) {
+  if (dineInBtn && takeAwayBtn && !document.getElementById("dining_type")) {
     dineInBtn.addEventListener("click", () => {
       dineInBtn.classList.remove("bg-transparent", "text-[#5F5E5B]");
       dineInBtn.classList.add("bg-[#800000]", "text-white");
@@ -296,11 +461,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // init keranjang totals if on keranjang
   if (document.querySelector(".warung-card")) updateTotal();
 
-  // init countdown if present (status / pembayaran)
   const timerEl = document.getElementById("timer");
   if (timerEl) startCountdownFromElement(timerEl);
-});
 
+  const qrisCd = document.getElementById("countdown-qris");
+  if (qrisCd && qrisCd.hasAttribute("data-countdown-seconds")) {
+    startCountdownFromElement(qrisCd);
+  }
+  const midtransCd = document.getElementById("countdown-midtrans");
+  if (midtransCd && midtransCd.hasAttribute("data-countdown-seconds")) {
+    startCountdownFromElement(midtransCd);
+  }
+});

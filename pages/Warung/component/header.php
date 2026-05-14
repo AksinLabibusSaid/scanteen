@@ -1,8 +1,23 @@
 <?php
-// Ambil data session warung jika tersedia
-$warungName = $_SESSION['nama'] ?? 'Stan Makmur';
-$warungCategory = $_SESSION['kategori'] ?? 'Kantin A — Stand 04';
-$warungAvatar = $_SESSION['foto'] ?? 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
+declare(strict_types=1);
+
+use App\Core\Database;
+use App\Staff\StaffAuth;
+
+$warungName = StaffAuth::check() ? StaffAuth::userName() : 'Warung';
+$warungCategory = 'Stan';
+$warungAvatar = 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
+$wid = StaffAuth::warungId();
+if ($wid !== null) {
+    $stmt = Database::mysqli()->prepare('SELECT name FROM warungs WHERE id = ? LIMIT 1');
+    $stmt->bind_param('i', $wid);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if ($row !== null) {
+        $warungCategory = (string) $row['name'];
+    }
+}
 ?>
 <!-- Header -->
 <header class="w-full h-16 px-6 flex items-center justify-between border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
@@ -51,6 +66,7 @@ $warungAvatar = $_SESSION['foto'] ?? 'https://api.builder.io/api/v1/image/assets
             <div class="w-10 h-10 rounded-full border-2 border-[var(--brand-soft)] overflow-hidden flex-shrink-0">
                 <img src="<?= htmlspecialchars($warungAvatar) ?>" alt="Warung Profile" class="w-full h-full object-cover">
             </div>
+            <a href="/scanteen/pages/staff/logout.php" class="text-xs font-bold text-[var(--brand)] hover:underline">Keluar</a>
         </div>
 
     </div>

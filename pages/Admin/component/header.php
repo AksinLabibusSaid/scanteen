@@ -1,7 +1,11 @@
 <?php
-// Ambil data session admin jika tersedia
-$adminName   = $_SESSION['nama']  ?? 'Administrator';
-$adminRole   = $_SESSION['role']  ?? 'Super Admin';
+declare(strict_types=1);
+
+use App\Staff\StaffAuth;
+
+$adminName = StaffAuth::check() ? StaffAuth::userName() : 'Administrator';
+$adminRole = StaffAuth::check() ? (string) StaffAuth::role() : 'Super Admin';
+$adminAvatar = 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
 $adminAvatar = $_SESSION['foto']  ?? 'https://api.builder.io/api/v1/image/assets/TEMP/fadf3b369dc031a0c33b9f7d9de993750210b555?width=72';
 ?>
 <!-- Header Admin -->
@@ -52,6 +56,7 @@ $adminAvatar = $_SESSION['foto']  ?? 'https://api.builder.io/api/v1/image/assets
                      alt="Admin Profile"
                      class="w-full h-full object-cover">
             </div>
+            <a href="/scanteen/pages/staff/logout.php" class="text-xs font-bold text-[var(--brand)] hover:underline">Keluar</a>
         </div>
 
     </div>

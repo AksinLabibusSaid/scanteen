@@ -1,15 +1,18 @@
-<!-- Main content -->
-<main class="flex-1 flex flex-col px-4 pt-6 pb-[105px] gap-6">
-    <!-- Section heading -->
-    <div class="flex flex-col gap-3">
-        <h2 class="text-[18px] font-semibold text-[#800000] leading-[33.6px]">
-            Metode Pembayaran
-        </h2>
+<?php
+declare(strict_types=1);
 
-        <!-- Payment options -->
+if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
+    header('Location: ../index.php?page=pilih-pembayaran');
+    exit;
+}
+?>
+<main class="flex-1 flex flex-col px-4 pt-6 pb-[105px] gap-6">
+    <div class="flex flex-col gap-3">
+        <h2 class="text-[18px] font-semibold text-[#800000] leading-[33.6px]">Metode Pembayaran</h2>
+        <p class="text-xs text-[#5F5E5B]">Hanya <strong>QRIS</strong> atau <strong>Bayar di Kasir</strong>.</p>
+
         <div class="flex flex-col gap-3">
-            <!-- QRIS option (selected) -->
-            <button class="payment-option group flex items-center justify-between w-full p-6 rounded-3xl bg-white transition-all border-2 border-[#800000] shadow-[0_4px_20px_0_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.08)]" data-method="qris">
+            <button type="button" class="payment-option group flex items-center justify-between w-full p-6 rounded-3xl bg-white transition-all border-2 border-[#800000] shadow-[0_4px_20px_0_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.08)]" data-method="qris">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-[#800000] transition-colors">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -17,22 +20,16 @@
                         </svg>
                     </div>
                     <div class="flex flex-col items-start text-left">
-                        <span class="text-sm font-semibold text-[#1A1C1A] leading-[16.8px] tracking-[0.7px]">
-                            QRIS
-                        </span>
-                        <span class="text-xs text-[#5F5E5B] leading-[19.2px] mt-0.5">
-                            Konfirmasi instan
-                        </span>
+                        <span class="text-sm font-semibold text-[#1A1C1A] leading-[16.8px] tracking-[0.7px]">QRIS</span>
+                        <span class="text-xs text-[#5F5E5B] leading-[19.2px] mt-0.5">Tunjukkan QR di kasir / konfirmasi setelah transfer</span>
                     </div>
                 </div>
-                <!-- Radio button (filled) -->
                 <div class="w-6 h-6 rounded-full border-2 border-[#800000] flex items-center justify-center flex-shrink-0 radio-button">
                     <div class="w-3 h-3 rounded-full bg-[#800000]"></div>
                 </div>
             </button>
 
-            <!-- Bayar di Kasir option (unselected) -->
-            <button class="payment-option group flex items-center justify-between w-full p-6 rounded-3xl bg-white transition-all border border-[#F5F5F4] opacity-70 shadow-[0_4px_20px_0_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.08)]" data-method="kasir">
+            <button type="button" class="payment-option group flex items-center justify-between w-full p-6 rounded-3xl bg-white transition-all border border-[#F5F5F4] opacity-70 shadow-[0_4px_20px_0_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.08)]" data-method="kasir">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-[#E5E2DD] transition-colors">
                         <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
@@ -40,25 +37,18 @@
                         </svg>
                     </div>
                     <div class="flex flex-col items-start text-left">
-                        <span class="text-sm font-semibold text-[#1A1C1A] leading-[16.8px] tracking-[0.7px]">
-                            Bayar di Kasir
-                        </span>
-                        <span class="text-xs text-[#5F5E5B] leading-[19.2px] mt-0.5">
-                            Bayar setelah makan
-                        </span>
+                        <span class="text-sm font-semibold text-[#1A1C1A] leading-[16.8px] tracking-[0.7px]">Bayar di Kasir</span>
+                        <span class="text-xs text-[#5F5E5B] leading-[19.2px] mt-0.5">Bayar tunai atau non-QR di kasir</span>
                     </div>
                 </div>
-                <!-- Radio button (empty) -->
-                <div class="w-6 h-6 rounded-full border-2 border-[#E7E5E4] flex items-center justify-center flex-shrink-0 radio-button">
-                </div>
+                <div class="w-6 h-6 rounded-full border-2 border-[#E7E5E4] flex items-center justify-center flex-shrink-0 radio-button"></div>
             </button>
         </div>
     </div>
 </main>
 
-<!-- Bottom action bar -->
 <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pt-4 pb-8 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-4px_12px_0_rgba(0,0,0,0.05)] rounded-t-[20px] z-40">
-    <button id="btnContinuePayment" class="w-full py-4 rounded-xl bg-[#7B0009] text-white text-base font-bold leading-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] active:opacity-90 transition-opacity hover:bg-[#6A0008]">
+    <button id="btnContinuePayment" type="button" class="w-full py-4 rounded-xl bg-[#7B0009] text-white text-base font-bold leading-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] active:opacity-90 transition-opacity hover:bg-[#6A0008]">
         Lanjutkan
     </button>
 </div>
@@ -67,44 +57,44 @@
     document.addEventListener('DOMContentLoaded', () => {
         const paymentOptions = document.querySelectorAll('.payment-option');
         const btnContinue = document.getElementById('btnContinuePayment');
-        let selectedMethod = 'qris'; // default
-        
+        let selectedMethod = 'qris';
+
         paymentOptions.forEach(option => {
-            option.addEventListener('click', function(e) {
+            option.addEventListener('click', function (e) {
                 e.preventDefault();
-                selectedMethod = this.dataset.method;
-                
-                // Remove active state from all options
+                selectedMethod = this.dataset.method || 'qris';
+
                 paymentOptions.forEach(opt => {
                     opt.classList.add('opacity-70');
                     opt.classList.remove('border-[#800000]', 'border-2');
                     opt.classList.add('border-[#F5F5F4]', 'border');
-                    
-                    const bg = opt.querySelector('[class*="bg-"]');
-                    bg.classList.remove('bg-[#800000]');
-                    bg.classList.add('bg-[#E5E2DD]');
-                    
-                    const svg = opt.querySelector('svg path');
-                    if (svg) svg.setAttribute('fill', '#5F5E5B');
-                    
+
+                    const bgIcon = opt.querySelector('.w-10.h-10.rounded-full');
+                    if (bgIcon) {
+                        bgIcon.classList.remove('bg-[#800000]');
+                        bgIcon.classList.add('bg-[#E5E2DD]');
+                    }
+                    const svgPath = opt.querySelector('svg path');
+                    if (svgPath) svgPath.setAttribute('fill', '#5F5E5B');
+
                     const radioButton = opt.querySelector('.radio-button');
                     radioButton.classList.remove('border-[#800000]');
                     radioButton.classList.add('border-[#E7E5E4]');
                     radioButton.innerHTML = '';
                 });
-                
-                // Set active state on clicked option
+
                 this.classList.remove('opacity-70');
                 this.classList.remove('border-[#F5F5F4]', 'border');
                 this.classList.add('border-[#800000]', 'border-2');
-                
-                const bgIcon = this.querySelector('div > div:first-child');
-                bgIcon.classList.remove('bg-[#E5E2DD]');
-                bgIcon.classList.add('bg-[#800000]');
-                
-                const svg = this.querySelector('svg path');
-                if (svg) svg.setAttribute('fill', 'white');
-                
+
+                const bgIcon = this.querySelector('.w-10.h-10.rounded-full');
+                if (bgIcon) {
+                    bgIcon.classList.remove('bg-[#E5E2DD]');
+                    bgIcon.classList.add('bg-[#800000]');
+                }
+                const svgPath = this.querySelector('svg path');
+                if (svgPath) svgPath.setAttribute('fill', 'white');
+
                 const radioButton = this.querySelector('.radio-button');
                 radioButton.classList.remove('border-[#E7E5E4]');
                 radioButton.classList.add('border-[#800000]');
@@ -112,14 +102,49 @@
             });
         });
 
-        if (btnContinue) {
-            btnContinue.addEventListener('click', () => {
-                if (selectedMethod === 'qris') {
-                    window.location.href = './index.php?page=bayar-qris';
-                } else {
-                    window.location.href = './index.php?page=bayar-kasir';
+        btnContinue?.addEventListener('click', async () => {
+            const apiRoot = document.body.getAttribute('data-api-root');
+            if (!apiRoot) return;
+            const payment_method = selectedMethod === 'qris' ? 'qris' : 'kasir';
+            btnContinue.disabled = true;
+            try {
+                const res = await fetch(apiRoot + '/order-create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ payment_method }),
+                });
+                const text = await res.text();
+                let data = {};
+                try { data = JSON.parse(text); } catch (_) {
+                    data = { ok: false, error: 'Respons server bukan JSON (' + res.status + ')' };
                 }
-            });
-        }
+                if (!data.ok) {
+                    const show = window.ScanteenUi && typeof window.ScanteenUi.showError === 'function'
+                        ? window.ScanteenUi.showError.bind(window.ScanteenUi)
+                        : function (o) { alert([o.message, o.detail].filter(Boolean).join('\n\n')); };
+                    show({
+                        title: 'Pesanan tidak dapat dibuat',
+                        message: data.error || 'Gagal membuat pesanan.',
+                        detail: data.detail || '',
+                    });
+                    btnContinue.disabled = false;
+                    return;
+                }
+                window.location.href = selectedMethod === 'qris'
+                    ? './index.php?page=bayar-qris'
+                    : './index.php?page=bayar-kasir';
+            } catch (e) {
+                const show = window.ScanteenUi && typeof window.ScanteenUi.showError === 'function'
+                    ? window.ScanteenUi.showError.bind(window.ScanteenUi)
+                    : function (o) { alert(o.message); };
+                show({
+                    title: 'Koneksi bermasalah',
+                    message: 'Tidak dapat menghubungi server. Periksa jaringan lalu coba lagi.',
+                    detail: e && e.message ? String(e.message) : '',
+                });
+                btnContinue.disabled = false;
+            }
+        });
     });
 </script>
