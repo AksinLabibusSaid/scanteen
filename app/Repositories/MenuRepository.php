@@ -230,6 +230,18 @@ final class MenuRepository
         return $ok;
     }
 
+    public function deleteMenu(int $menuId, int $warungId): bool
+    {
+        $sql = 'DELETE FROM menus WHERE id = ? AND warung_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $menuId, $warungId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

@@ -213,9 +213,14 @@ final class OrderListRepository
             $params[] = $warungId;
         }
         if ($orderSearch !== null && trim($orderSearch) !== '') {
-            $like = '%' . trim($orderSearch) . '%';
-            $where[] = '(o.order_number LIKE ? OR o.public_token LIKE ? OR o.customer_name LIKE ?)';
-            $types .= 'sss';
+            $rawSearch = trim($orderSearch);
+            $like = '%' . $rawSearch . '%';
+            
+            // If it looks like ORD-MMDD-XXX, try to match the last part or the whole thing if stored
+            // But usually we just search raw order_number, public_token, or customer name
+            $where[] = '(o.order_number LIKE ? OR o.public_token LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ?)';
+            $types .= 'ssss';
+            $params[] = $like;
             $params[] = $like;
             $params[] = $like;
             $params[] = $like;

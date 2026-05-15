@@ -71,7 +71,10 @@ final class OrderCreationService
             ];
         }
 
-        $serviceRate = 0.10;
+        $venueRepo = new \App\Repositories\VenueRepository();
+        $venue = $venueRepo->findById($ctx->venueId);
+        $serviceRate = ($venue['service_fee_percent'] ?? 10.0) / 100.0;
+        
         $serviceTax = round($subtotal * $serviceRate, 2);
         $total = round($subtotal + $serviceTax, 2);
 
@@ -80,8 +83,9 @@ final class OrderCreationService
         $orderDateYmd = $orderDate->format('Y-m-d');
         $orderNumber = null;
 
+        $expiryMinutes = (int) ($venue['payment_expiry_minutes'] ?? 15);
         $deadline = (new \DateTimeImmutable('now', new \DateTimeZone(date_default_timezone_get())))
-            ->modify('+15 minutes')
+            ->modify('+' . $expiryMinutes . ' minutes')
             ->format('Y-m-d H:i:s');
 
         $customerName = $draft['name'];

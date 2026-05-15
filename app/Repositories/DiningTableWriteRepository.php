@@ -48,6 +48,18 @@ final class DiningTableWriteRepository
         return $ok;
     }
 
+    public function delete(int $id, int $venueId): bool
+    {
+        $sql = 'DELETE FROM dining_tables WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $id, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
+
     public function softDelete(int $id, int $venueId): bool
     {
         return $this->setActive($id, $venueId, 0);

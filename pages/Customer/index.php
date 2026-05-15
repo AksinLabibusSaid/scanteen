@@ -13,6 +13,7 @@ use App\Repositories\OrderRepository;
 use App\Services\CartService;
 use App\Services\CartViewBuilder;
 use App\Services\CheckoutDraftService;
+use App\Services\VenueOperatingService;
 
 CustomerAccess::syncTableTokenFromRequest();
 
@@ -120,6 +121,19 @@ if (!$customerHasAccess) {
     }
 
     $contentFile = $allowedPages[$pageKey];
+
+    // Global Venue Status Check (except for critical pages like status/struk if order exists)
+    $exemptPages = ['status-belum-bayar', 'status-sudah-bayar', 'struk', 'status'];
+    if (!in_array($pageKey, $exemptPages, true) && isset($_SESSION[CustomerSessionKeys::VENUE_ID])) {
+        $venueId = (int) $_SESSION[CustomerSessionKeys::VENUE_ID];
+        $status = (new VenueOperatingService())->getStatus($venueId);
+        if (!$status['isOpen']) {
+            $pageKey = 'closed';
+            $contentFile = __DIR__ . '/content/closed.php';
+            // Pass status to the closed page
+            $closedStatus = $status;
+        }
+    }
 }
 
 $customerApiRoot = '../../api/customer';

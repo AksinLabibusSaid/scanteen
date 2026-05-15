@@ -23,9 +23,38 @@ final class OrderApiController extends StaffApiController
             case 'cancel':
                 $this->cancel($data);
                 break;
+            case 'detail':
+                $this->detail($data);
+                break;
             default:
                 $this->json(['ok' => false, 'error' => 'Aksi tidak dikenal'], 400);
         }
+    }
+
+    private function detail(array $data): void
+    {
+        $orderId = (int) ($data['order_id'] ?? 0);
+        $venueId = (int) StaffAuth::venueId();
+
+        if ($orderId <= 0) {
+            $this->json(['ok' => false, 'error' => 'ID tidak valid'], 422);
+        }
+
+        $repo = new OrderRepository();
+        $order = $repo->findById($orderId);
+        if ($order === null || (int) $order['venue_id'] !== $venueId) {
+            $this->json(['ok' => false, 'error' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        $items = $repo->itemsByOrderId($orderId);
+        $groups = $repo->groupItemsByWarung($orderId);
+
+        $this->json([
+            'ok' => true,
+            'order' => $order,
+            'items' => $items,
+            'groups' => $groups,
+        ]);
     }
 
     private function markPaid(array $data): void

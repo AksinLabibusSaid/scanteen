@@ -14,7 +14,7 @@ final class WarungRepository
     public function listByVenueId(int $venueId): array
     {
         $sql = <<<SQL
-            SELECT id, venue_id, name, slug, sort_order, is_active, created_at
+            SELECT id, venue_id, name, slug, sort_order, is_active, owner_name, owner_phone, created_at
             FROM warungs
             WHERE venue_id = ?
             ORDER BY sort_order ASC, id ASC
@@ -77,20 +77,37 @@ final class WarungRepository
         return $s !== '' ? $s : 'warung';
     }
 
-    public function insert(int $venueId, string $name, ?string $slug = null): int
+    public function insert(int $venueId, string $name, ?string $ownerName = null, ?string $ownerPhone = null, ?string $slug = null): int
     {
         $name = trim($name);
+        $ownerName = $ownerName !== null ? trim($ownerName) : null;
+        $ownerPhone = $ownerPhone !== null ? trim($ownerPhone) : null;
         $sort = $this->nextSortOrder($venueId);
         $base = self::slugify($name);
         $slug = $slug !== null && trim($slug) !== '' ? trim($slug) : $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
-        $sql = 'INSERT INTO warungs (venue_id, name, slug, sort_order, is_active) VALUES (?,?,?,?,1)';
+        $sql = 'INSERT INTO warungs (venue_id, name, owner_name, owner_phone, slug, sort_order, is_active) VALUES (?,?,?,?,?,?,1)';
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('issi', $venueId, $name, $slug, $sort);
+        $stmt->bind_param('issssi', $venueId, $name, $ownerName, $ownerPhone, $slug, $sort);
         $stmt->execute();
         $id = (int) $stmt->insert_id;
         $stmt->close();
 
         return $id;
+    }
+
+    public function updateInfo(int $warungId, int $venueId, string $name, ?string $ownerName, ?string $ownerPhone): bool
+    {
+        $name = trim($name);
+        $ownerName = $ownerName !== null ? trim($ownerName) : null;
+        $ownerPhone = $ownerPhone !== null ? trim($ownerPhone) : null;
+        $sql = 'UPDATE warungs SET name = ?, owner_name = ?, owner_phone = ? WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('sssii', $name, $ownerName, $ownerPhone, $warungId, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
     }
 
     private function nextSortOrder(int $venueId): int
@@ -123,6 +140,18 @@ final class WarungRepository
         $sql = 'UPDATE warungs SET name = ? WHERE id = ? AND venue_id = ?';
         $stmt = Database::mysqli()->prepare($sql);
         $stmt->bind_param('sii', $name, $warungId, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
+
+    public function delete(int $warungId, int $venueId): bool
+    {
+        $sql = 'DELETE FROM warungs WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $warungId, $venueId);
         $stmt->execute();
         $ok = $stmt->affected_rows === 1;
         $stmt->close();
