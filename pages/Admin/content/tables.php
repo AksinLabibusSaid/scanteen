@@ -5,7 +5,9 @@ use App\Repositories\DiningTableRepository;
 use App\Staff\StaffAuth;
 use App\Support\PublicUrl;
 use App\Core\Database;
+use chillerlan\QRCode\QRCode;
 
+$qrGenerator = new QRCode();
 $venueId = (int) StaffAuth::venueId();
 $dtr = new DiningTableRepository();
 $allTables = $dtr->listByVenueId($venueId);
@@ -124,6 +126,7 @@ if ($filterStatus === 'available') {
         $tableNumber = htmlspecialchars((string) $t['table_number'], ENT_QUOTES, 'UTF-8');
         $token = (string) $t['barcode_token'];
         $scanUrl = PublicUrl::customerScanUrl($token);
+        $qrDataUri = $qrGenerator->render($scanUrl);
         $isOccupied = in_array($tid, $activeIds, true);
     ?>
     <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden hover:shadow-md transition-all">
@@ -135,12 +138,12 @@ if ($filterStatus === 'available') {
                 </span>
             </div>
 
-            <div class="flex items-center justify-center py-6 bg-gray-50 rounded-2xl mb-8 group cursor-pointer" onclick="showQR('<?= $tableNumber ?>', '<?= $token ?>', '<?= $scanUrl ?>')">
-                <div id="qr-mini-<?= $token ?>" class="opacity-80 group-hover:opacity-100 transition-opacity"></div>
+            <div class="flex items-center justify-center py-6 bg-gray-50 rounded-2xl mb-8 group cursor-pointer" onclick="showQR('<?= $tableNumber ?>', '<?= $qrDataUri ?>')">
+                <img src="<?= $qrDataUri ?>" alt="QR Meja <?= $tableNumber ?>" class="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity">
             </div>
 
             <div class="flex items-center justify-between">
-                <button class="flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all" onclick="showQR('<?= $tableNumber ?>', '<?= $token ?>', '<?= $scanUrl ?>')">
+                <button class="flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all" onclick="showQR('<?= $tableNumber ?>', '<?= $qrDataUri ?>')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
                     Lihat QR
                 </button>
@@ -159,9 +162,8 @@ if ($filterStatus === 'available') {
     </div>
 <?php endif; ?>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
-function showQR(table, token, url) {
+function showQR(table, dataUri) {
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR Meja ${table}</title><style>
@@ -169,37 +171,22 @@ function showQR(table, token, url) {
         .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
         .table-num { font-size: 32px; font-weight: 900; margin-bottom: 5px; color: #1f2937; }
         .label { font-size: 14px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 30px; }
-        #qr { margin-bottom: 30px; }
+        .qr-img { margin-bottom: 30px; width: 300px; height: 300px; }
         .footer { font-size: 12px; color: #d1d5db; }
         @media print { body { background: white; } .card { box-shadow: none; } }
-    </style></head><body><div class="card">
+    </style></head><body onload="window.print()">
+    <div class="card">
         <div class="table-num">MEJA ${table}</div>
         <div class="label">SmartCanteen QR Code</div>
-        <div id="qr"></div>
+        <img src="${dataUri}" class="qr-img" />
         <div class="footer">Scan untuk memesan</div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
-    <script>
-        QRCode.toCanvas(document.getElementById('qr'), '${url}', { width: 300, margin: 2 }, function(err) {
-            if (err) console.error(err);
-            else setTimeout(() => window.print(), 500);
-        });
-    <\/script></body></html>`);
+    </body></html>`);
     w.document.close();
 }
 
 (function () {
     const apiTable = <?= json_encode(PublicUrl::basePath() . '/api/staff/table.php') ?>;
-    
-    // Render mini QRs
-    <?php foreach ($tables as $t): ?>
-    QRCode.toCanvas(document.createElement('canvas'), <?= json_encode(PublicUrl::customerScanUrl($t['barcode_token'])) ?>, { width: 80, margin: 1 }, function(err, canvas) {
-        if (!err) {
-            const container = document.getElementById('qr-mini-<?= $t['barcode_token'] ?>');
-            if (container) container.appendChild(canvas);
-        }
-    });
-    <?php endforeach; ?>
 
     document.getElementById('formAddTable').addEventListener('submit', async function(e) {
         e.preventDefault();

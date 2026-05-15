@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'aksin/scanteen',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => 'e0fd5ee6b16bf82bfa7294e5828de34d9cc0bd0f',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        'aksin/scanteen' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => 'e0fd5ee6b16bf82bfa7294e5828de34d9cc0bd0f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'chillerlan/php-qrcode' => array(
+            'pretty_version' => '6.0.1',
+            'version' => '6.0.1.0',
+            'reference' => '49006e34bd5328f163e80329e7312f34dceea59b',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../chillerlan/php-qrcode',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'chillerlan/php-settings-container' => array(
+            'pretty_version' => '3.3.0',
+            'version' => '3.3.0.0',
+            'reference' => 'a0a487cbf5344f721eb504bf0f59bada40c381b7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../chillerlan/php-settings-container',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);

@@ -9,6 +9,11 @@ if (!defined('SCANTEEN_ROOT')) {
     define('SCANTEEN_ROOT', dirname(__DIR__));
 }
 
+// Composer autoloader
+if (is_file(SCANTEEN_ROOT . '/vendor/autoload.php')) {
+    require_once SCANTEEN_ROOT . '/vendor/autoload.php';
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {
