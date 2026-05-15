@@ -15,12 +15,38 @@ $allowedPages = [
     'orders'    => __DIR__ . '/content/orders.php',
     'history'   => __DIR__ . '/content/history.php',
     'reports'   => __DIR__ . '/content/reports.php',
+    'struk'     => dirname(__DIR__) . '/Shared/content/struk.php',
     'profile'   => dirname(__DIR__) . '/Shared/content/profile.php',
 ];
 
 $pageKey = isset($_GET['page']) ? (string) $_GET['page'] : 'dashboard';
 if (!array_key_exists($pageKey, $allowedPages)) {
     $pageKey = 'dashboard';
+}
+
+// Data loading for Shared pages like 'struk'
+if ($pageKey === 'struk') {
+    $orderId = (int) ($_GET['id'] ?? 0);
+    if ($orderId > 0) {
+        $orderRepo = new \App\Repositories\OrderRepository();
+        $customerOrder = $orderRepo->findById($orderId);
+        $customerOrderGroups = $orderRepo->groupItemsByWarung($orderId);
+        
+        // Fetching venue name from database as it's not in session
+        $venueIdFromSession = \App\Staff\StaffAuth::venueId();
+        $db = \App\Core\Database::mysqli();
+        $stmt = $db->prepare("SELECT name FROM venues WHERE id = ? LIMIT 1");
+        $stmt->bind_param('i', $venueIdFromSession);
+        $stmt->execute();
+        $venueData = $stmt->get_result()->fetch_assoc();
+        $venueName = $venueData ? (string)$venueData['name'] : 'Scanteen';
+        $stmt->close();
+
+        $customerContext = (object)[
+            'venueName' => $venueName,
+            'tableNumber' => $customerOrder['table_number'] ?? '?'
+        ];
+    }
 }
 
 $activePage  = $pageKey;
@@ -30,9 +56,31 @@ $pageTitle = match($pageKey) {
     'orders'   => 'Orders',
     'history'  => 'History',
     'reports'  => 'Reports',
+    'struk'    => 'Struk Pembayaran',
     'profile'  => 'Profil Saya',
     default    => 'Dashboard',
 };
+
+// Standalone page for Struk
+if ($pageKey === 'struk') {
+    ?>
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <style>body { font-family: 'Inter', sans-serif; }</style>
+    </head>
+    <body class="bg-gray-50">
+        <?php include $contentFile; ?>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">

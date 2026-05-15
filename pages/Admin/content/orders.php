@@ -61,9 +61,10 @@ $orders = $orderListRepo->listForVenueFiltered(
     100,
     $filters['status'] !== '' ? $filters['status'] : null,
     $filters['date'] !== '' ? $filters['date'] : null,
+    null, // dateTo
     $filters['payment'] !== '' ? $filters['payment'] : null,
     $filters['warung'] > 0 ? $filters['warung'] : null,
-    $filters['q'] !== '' ? $filters['q'] : null,
+    $filters['q'] !== '' ? $filters['q'] : null
 );
 
 $warungs = $warungRepo->listByVenueId($venueId);

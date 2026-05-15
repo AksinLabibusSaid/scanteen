@@ -175,14 +175,17 @@ final class OrderListRepository
      */
     public function listForVenueFiltered(
         int $venueId,
-        int $limit = 150,
+        int $limit = 20,
         ?string $status = null,
-        ?string $dateYmd = null,
+        ?string $dateFrom = null,
+        ?string $dateTo = null,
         ?string $paymentMethod = null,
         ?int $warungId = null,
         ?string $orderSearch = null,
+        int $offset = 0
     ): array {
         $limit = max(1, min(500, $limit));
+        $offset = max(0, $offset);
         $statuses = [
             'pending_payment', 'paid', 'accepted', 'processing', 'ready', 'completed', 'cancelled',
         ];
@@ -197,10 +200,17 @@ final class OrderListRepository
             $types .= 's';
             $params[] = $status;
         }
-        if ($dateYmd !== null && $dateYmd !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
-            $where[] = 'DATE(o.created_at) = ?';
-            $types .= 's';
-            $params[] = $dateYmd;
+        if ($dateFrom !== null && $dateFrom !== '') {
+            if ($dateTo !== null && $dateTo !== '' && $dateFrom !== $dateTo) {
+                $where[] = 'DATE(o.created_at) BETWEEN ? AND ?';
+                $types .= 'ss';
+                $params[] = $dateFrom;
+                $params[] = $dateTo;
+            } else {
+                $where[] = 'DATE(o.created_at) = ?';
+                $types .= 's';
+                $params[] = $dateFrom;
+            }
         }
         if ($paymentMethod !== null && $paymentMethod !== '' && in_array($paymentMethod, $payments, true)) {
             $where[] = 'o.payment_method = ?';
@@ -213,14 +223,9 @@ final class OrderListRepository
             $params[] = $warungId;
         }
         if ($orderSearch !== null && trim($orderSearch) !== '') {
-            $rawSearch = trim($orderSearch);
-            $like = '%' . $rawSearch . '%';
-            
-            // If it looks like ORD-MMDD-XXX, try to match the last part or the whole thing if stored
-            // But usually we just search raw order_number, public_token, or customer name
-            $where[] = '(o.order_number LIKE ? OR o.public_token LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ?)';
-            $types .= 'ssss';
-            $params[] = $like;
+            $like = '%' . trim($orderSearch) . '%';
+            $where[] = '(o.order_number LIKE ? OR o.public_token LIKE ? OR o.customer_name LIKE ?)';
+            $types .= 'sss';
             $params[] = $like;
             $params[] = $like;
             $params[] = $like;
@@ -237,7 +242,11 @@ final class OrderListRepository
             . ') AS tenant_names '
             . 'FROM orders o INNER JOIN dining_tables dt ON dt.id = o.dining_table_id WHERE '
             . implode(' AND ', $where)
-            . ' ORDER BY o.id DESC LIMIT ' . $limit;
+            . ' ORDER BY o.id DESC LIMIT ? OFFSET ?';
+        
+        $types .= 'ii';
+        $params[] = $limit;
+        $params[] = $offset;
 
         $stmt = Database::mysqli()->prepare($sql);
         $stmt->bind_param($types, ...$params);
@@ -250,5 +259,69 @@ final class OrderListRepository
         $stmt->close();
 
         return $rows;
+    }
+
+    public function countForVenueFiltered(
+        int $venueId,
+        ?string $status = null,
+        ?string $dateFrom = null,
+        ?string $dateTo = null,
+        ?string $paymentMethod = null,
+        ?int $warungId = null,
+        ?string $orderSearch = null
+    ): int {
+        $statuses = ['pending_payment', 'paid', 'accepted', 'processing', 'ready', 'completed', 'cancelled'];
+        $payments = ['qris', 'cashier'];
+
+        $where = ['o.venue_id = ?'];
+        $types = 'i';
+        $params = [$venueId];
+
+        if ($status !== null && $status !== '' && in_array($status, $statuses, true)) {
+            $where[] = 'o.status = ?';
+            $types .= 's';
+            $params[] = $status;
+        }
+        
+        if ($dateFrom !== null && $dateFrom !== '') {
+            if ($dateTo !== null && $dateTo !== '' && $dateFrom !== $dateTo) {
+                $where[] = 'DATE(o.created_at) BETWEEN ? AND ?';
+                $types .= 'ss';
+                $params[] = $dateFrom;
+                $params[] = $dateTo;
+            } else {
+                $where[] = 'DATE(o.created_at) = ?';
+                $types .= 's';
+                $params[] = $dateFrom;
+            }
+        }
+
+        if ($paymentMethod !== null && $paymentMethod !== '' && in_array($paymentMethod, $payments, true)) {
+            $where[] = 'o.payment_method = ?';
+            $types .= 's';
+            $params[] = $paymentMethod;
+        }
+        if ($warungId !== null && $warungId > 0) {
+            $where[] = 'EXISTS (SELECT 1 FROM order_items oi2 WHERE oi2.order_id = o.id AND oi2.warung_id = ?)';
+            $types .= 'i';
+            $params[] = $warungId;
+        }
+        if ($orderSearch !== null && trim($orderSearch) !== '') {
+            $like = '%' . trim($orderSearch) . '%';
+            $where[] = '(o.order_number LIKE ? OR o.public_token LIKE ? OR o.customer_name LIKE ?)';
+            $types .= 'sss';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $sql = 'SELECT COUNT(*) FROM orders o WHERE ' . implode(' AND ', $where);
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $count = (int) $stmt->get_result()->fetch_row()[0];
+        $stmt->close();
+
+        return $count;
     }
 }

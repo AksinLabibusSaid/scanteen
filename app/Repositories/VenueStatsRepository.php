@@ -53,20 +53,38 @@ final class VenueStatsRepository
     /**
      * @return array{orders:int, revenue:float}
      */
-    public function summaryBetween(int $venueId, string $dateFrom, string $dateTo): array
+    public function summaryBetween(int $venueId, string $dateFrom, string $dateTo, ?int $warungId = null): array
     {
         $mysqli = Database::mysqli();
-        $sql = <<<SQL
-            SELECT
-                COUNT(*) AS c,
-                COALESCE(SUM(o.total), 0) AS rev
-            FROM orders o
-            WHERE o.venue_id = ?
-              AND DATE(o.created_at) BETWEEN ? AND ?
-              AND o.status IN ('paid','accepted','processing','ready','completed')
-            SQL;
-        $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('iss', $venueId, $dateFrom, $dateTo);
+        
+        if ($warungId !== null) {
+            $sql = <<<SQL
+                SELECT
+                    COUNT(DISTINCT o.id) AS c,
+                    COALESCE(SUM(oi.line_subtotal), 0) AS rev
+                FROM orders o
+                INNER JOIN order_items oi ON oi.order_id = o.id
+                WHERE o.venue_id = ?
+                  AND oi.warung_id = ?
+                  AND DATE(o.created_at) BETWEEN ? AND ?
+                  AND o.status IN ('paid','accepted','processing','ready','completed')
+                SQL;
+            $stmt = $mysqli->prepare($sql);
+            $stmt->bind_param('iiss', $venueId, $warungId, $dateFrom, $dateTo);
+        } else {
+            $sql = <<<SQL
+                SELECT
+                    COUNT(*) AS c,
+                    COALESCE(SUM(o.total), 0) AS rev
+                FROM orders o
+                WHERE o.venue_id = ?
+                  AND DATE(o.created_at) BETWEEN ? AND ?
+                  AND o.status IN ('paid','accepted','processing','ready','completed')
+                SQL;
+            $stmt = $mysqli->prepare($sql);
+            $stmt->bind_param('iss', $venueId, $dateFrom, $dateTo);
+        }
+        
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
@@ -82,9 +100,11 @@ final class VenueStatsRepository
      *
      * @return array{name:string, revenue:float, orders:int}|null
      */
-    public function topWarungBetween(int $venueId, string $dateFrom, string $dateTo): ?array
+    public function topWarungBetween(int $venueId, string $dateFrom, string $dateTo, ?int $warungId = null): ?array
     {
         $mysqli = Database::mysqli();
+        $whereWarung = $warungId !== null ? "AND oi.warung_id = ?" : "";
+        
         $sql = <<<SQL
             SELECT w.name AS warung_name,
                    COALESCE(SUM(oi.line_subtotal), 0) AS revenue,
@@ -93,6 +113,7 @@ final class VenueStatsRepository
             INNER JOIN orders o ON o.id = oi.order_id
             INNER JOIN warungs w ON w.id = oi.warung_id
             WHERE o.venue_id = ?
+              $whereWarung
               AND DATE(o.created_at) BETWEEN ? AND ?
               AND o.status IN ('paid','accepted','processing','ready','completed')
             GROUP BY oi.warung_id, w.name
@@ -100,7 +121,11 @@ final class VenueStatsRepository
             LIMIT 1
             SQL;
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('iss', $venueId, $dateFrom, $dateTo);
+        if ($warungId !== null) {
+            $stmt->bind_param('iiss', $venueId, $warungId, $dateFrom, $dateTo);
+        } else {
+            $stmt->bind_param('iss', $venueId, $dateFrom, $dateTo);
+        }
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
@@ -118,12 +143,14 @@ final class VenueStatsRepository
     /**
      * @return list<array<string, mixed>>
      */
-    public function warungRevenueBreakdown(int $venueId, string $dateFrom, string $dateTo): array
+    public function warungRevenueBreakdown(int $venueId, string $dateFrom, string $dateTo, ?int $warungId = null): array
     {
         $mysqli = Database::mysqli();
+        $whereWarung = $warungId !== null ? "AND w.id = ?" : "";
+        
         $sql = <<<SQL
             SELECT w.id AS warung_id, w.name AS warung_name,
-                   COALESCE(SUM(oi.line_subtotal), 0) AS revenue
+                   COALESCE(SUM(IF(o.id IS NOT NULL, oi.line_subtotal, 0)), 0) AS revenue
             FROM warungs w
             LEFT JOIN order_items oi ON oi.warung_id = w.id
             LEFT JOIN orders o ON o.id = oi.order_id
@@ -131,11 +158,16 @@ final class VenueStatsRepository
               AND DATE(o.created_at) BETWEEN ? AND ?
               AND o.status IN ('paid','accepted','processing','ready','completed')
             WHERE w.venue_id = ?
+              $whereWarung
             GROUP BY w.id, w.name
             ORDER BY revenue DESC, w.sort_order ASC
             SQL;
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('ssi', $dateFrom, $dateTo, $venueId);
+        if ($warungId !== null) {
+            $stmt->bind_param('ssii', $dateFrom, $dateTo, $venueId, $warungId);
+        } else {
+            $stmt->bind_param('ssi', $dateFrom, $dateTo, $venueId);
+        }
         $stmt->execute();
         $res = $stmt->get_result();
         $rows = [];
