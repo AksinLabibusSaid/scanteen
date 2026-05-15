@@ -129,4 +129,16 @@ final class WarungRepository
 
         return $ok;
     }
+
+    public function softDelete(int $warungId, int $venueId): bool
+    {
+        $sql = 'UPDATE warungs SET is_active = 0 WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $warungId, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
 }

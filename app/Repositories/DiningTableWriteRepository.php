@@ -23,4 +23,33 @@ final class DiningTableWriteRepository
 
         return $id;
     }
+
+    public function updateTableNumber(int $id, int $venueId, string $tableNumber): bool
+    {
+        $sql = 'UPDATE dining_tables SET table_number = ? WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('sii', $tableNumber, $id, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
+
+    public function setActive(int $id, int $venueId, int $isActive): bool
+    {
+        $sql = 'UPDATE dining_tables SET is_active = ? WHERE id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('iii', $isActive, $id, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
+
+        return $ok;
+    }
+
+    public function softDelete(int $id, int $venueId): bool
+    {
+        return $this->setActive($id, $venueId, 0);
+    }
 }

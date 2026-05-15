@@ -14,7 +14,7 @@ $groups = $customerOrderGroups ?? [];
 $pm = (string) ($ord['payment_method'] ?? '');
 $payLabel = match ($pm) {
     'qris' => 'QRIS',
-    'cashier' => 'Bayar di kasir',
+    'midtrans' => 'Midtrans',
     default => 'Bayar di kasir',
 };
 $dineLabel = (($ord['dining_type'] ?? '') === 'take_away') ? 'Take away' : 'Dine-in';

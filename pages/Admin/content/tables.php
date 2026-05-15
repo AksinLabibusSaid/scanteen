@@ -1,5 +1,57 @@
 <?php
-// Table Management — Admin High-Fidelity Design
+declare(strict_types=1);
+
+use App\Repositories\DiningTableRepository;
+use App\Repositories\DiningTableWriteRepository;
+use App\Staff\StaffAuth;
+use App\Support\PublicUrl;
+use App\Core\Database;
+
+$venueId = (int) StaffAuth::venueId();
+$dtr = new DiningTableRepository();
+$tables = $dtr->listByVenueId($venueId);
+
+// summary counts
+$totalTables = count($tables);
+$activeTables = 0;
+foreach ($tables as $tt) {
+    if ((int) ($tt['is_active'] ?? 0) === 1) {
+        $activeTables++;
+    }
+}
+$inactiveTables = max(0, $totalTables - $activeTables);
+
+// occupied tables: distinct dining_table_id from active orders
+$mysqli = Database::mysqli();
+$sql = 'SELECT COUNT(DISTINCT dining_table_id) AS c FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND status IN (\'accepted\', \'processing\', \'ready\', \'paid\')';
+$stmt = $mysqli->prepare($sql);
+$stmt->bind_param('i', $venueId);
+$stmt->execute();
+$row = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+$occupiedTables = (int) ($row['c'] ?? 0);
+
+// approximate: scans today = number of orders created today with a dining_table_id
+$sql2 = 'SELECT COUNT(*) AS c FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND DATE(created_at) = CURDATE()';
+$stmt2 = $mysqli->prepare($sql2);
+$stmt2->bind_param('i', $venueId);
+$stmt2->execute();
+$row2 = $stmt2->get_result()->fetch_assoc();
+$stmt2->close();
+$scansToday = (int) ($row2['c'] ?? 0);
+
+// get set of currently occupied table ids for per-card badge
+$activeIds = [];
+$sql3 = 'SELECT DISTINCT dining_table_id FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND status IN (\'accepted\', \'processing\', \'ready\', \'paid\')';
+$stmt3 = $mysqli->prepare($sql3);
+$stmt3->bind_param('i', $venueId);
+$stmt3->execute();
+$res3 = $stmt3->get_result();
+while ($r = $res3->fetch_assoc()) {
+    $activeIds[] = (int) ($r['dining_table_id'] ?? 0);
+}
+$stmt3->close();
+
 ?>
 
 <!-- Page Header -->
@@ -9,18 +61,24 @@
         <p class="text-sm text-[var(--text-muted)] font-medium mt-1">Pantau ketersediaan meja dan kelola kode QR pemesanan pelanggan.</p>
     </div>
     <div class="flex items-center gap-3">
-        <button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[var(--brand)] text-[var(--brand)] text-xs font-black uppercase tracking-widest shadow-sm hover:bg-[var(--brand-muted)] transition-all">
+        <button id="btnBulkDownload" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[var(--brand)] text-[var(--brand)] text-xs font-black uppercase tracking-widest shadow-sm hover:bg-[var(--brand-muted)] transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
             Bulk Download QR
         </button>
-        <button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand)] text-white text-xs font-black uppercase tracking-widest shadow-md hover:opacity-90 transition-all">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M6 8H0V6H6V0H8V6H14V8H8V14H6V8Z" fill="white"/>
-            </svg>
-            Tambah Meja Baru
-        </button>
+        <form id="formAddTable" class="inline" onsubmit="return false;">
+            <div class="flex items-center gap-2">
+                <input id="inputTableNumber" name="table_number" type="text" placeholder="Nomor meja (Contoh: T-01)" class="px-4 py-3 rounded-xl border border-gray-100 text-xs outline-none" />
+                <button id="btnAddTable" type="submit" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand)] text-white text-xs font-black uppercase tracking-widest shadow-md hover:opacity-90 transition-all">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M6 8H0V6H6V0H8V6H14V8H8V14H6V8Z" fill="white"/>
+                    </svg>
+                    Tambah Meja Baru
+                </button>
+                <span id="addTableMsg" class="text-xs ml-2 hidden"></span>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -34,7 +92,7 @@
         </div>
         <div>
             <p class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Total Meja</p>
-            <p class="poppins text-xl font-black text-[var(--text-dark)]">48</p>
+            <p class="poppins text-xl font-black text-[var(--text-dark)]"><?= $totalTables ?></p>
         </div>
     </div>
     <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex items-center gap-4">
@@ -45,7 +103,7 @@
         </div>
         <div>
             <p class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Meja Tersedia</p>
-            <p class="poppins text-xl font-black text-[#16A34A]">32</p>
+            <p class="poppins text-xl font-black text-[#16A34A]"><?= $activeTables ?></p>
         </div>
     </div>
     <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex items-center gap-4">
@@ -56,7 +114,7 @@
         </div>
         <div>
             <p class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Meja Terisi</p>
-            <p class="poppins text-xl font-black text-[var(--brand)]">16</p>
+            <p class="poppins text-xl font-black text-[var(--brand)]"><?= $occupiedTables ?></p>
         </div>
     </div>
     <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex items-center gap-4">
@@ -67,7 +125,7 @@
         </div>
         <div>
             <p class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Total Scan Hari Ini</p>
-            <p class="poppins text-xl font-black text-blue-600">124</p>
+            <p class="poppins text-xl font-black text-blue-600"><?= $scansToday ?></p>
         </div>
     </div>
 </div>
@@ -92,25 +150,21 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
-            <?php
-            $tableData = [
-                ['id' => 'T-01', 'status' => 'Available', 'chairs' => '4'],
-                ['id' => 'T-02', 'status' => 'Occupied', 'chairs' => '2'],
-                ['id' => 'T-03', 'status' => 'Available', 'chairs' => '6'],
-                ['id' => 'T-04', 'status' => 'Available', 'chairs' => '4'],
-                ['id' => 'T-05', 'status' => 'Occupied', 'chairs' => '4'],
-                ['id' => 'T-06', 'status' => 'Available', 'chairs' => '2'],
-            ];
-
-            foreach ($tableData as $t):
-                $isAvailable = $t['status'] === 'Available';
+            <?php foreach ($tables as $t):
+                $tid = (int) $t['id'];
+                $tableNumber = htmlspecialchars((string) $t['table_number'], ENT_QUOTES, 'UTF-8');
+                $isActive = (int) ($t['is_active'] ?? 0) === 1;
+                $token = htmlspecialchars((string) $t['barcode_token'], ENT_QUOTES, 'UTF-8');
+                $scanUrl = PublicUrl::customerScanUrl((string) $t['barcode_token']);
+                $isOccupied = in_array($tid, $activeIds, true);
+                $seats = isset($t['seats']) ? (int) $t['seats'] : 4;
             ?>
             <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden hover:shadow-md transition-all">
                 <div class="p-8">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="poppins text-lg font-black text-[var(--text-dark)]"><?= $t['id'] ?></h3>
-                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider <?= $isAvailable ? 'bg-[#F0FDF4] text-[#16A34A]' : 'bg-[#FDE8E4] text-[var(--brand)]' ?>">
-                            <?= $t['status'] ?>
+                        <h3 class="poppins text-lg font-black text-[var(--text-dark)]"><?= $tableNumber ?></h3>
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider <?= $isOccupied ? 'bg-[#FDE8E4] text-[var(--brand)]' : 'bg-[#F0FDF4] text-[#16A34A]' ?>">
+                            <?= $isOccupied ? 'Occupied' : 'Available' ?>
                         </span>
                     </div>
 
@@ -118,27 +172,27 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-gray-400">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                         </svg>
-                        <span class="text-[11px] font-bold text-gray-400"><?= $t['chairs'] ?> Kursi</span>
+                        <span class="text-[11px] font-bold text-gray-400"><?= $seats ?> Kursi</span>
                     </div>
 
                     <div class="h-px bg-gray-50 mb-6"></div>
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <button class="flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all">
+                            <button class="btn-show-qr flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all" data-token="<?= $token ?>" data-url="<?= htmlspecialchars($scanUrl, ENT_QUOTES, 'UTF-8') ?>" data-table="<?= $tableNumber ?>">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/>
                                 </svg>
                                 QR
                             </button>
-                            <button class="flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all">
+                            <button class="btn-edit-table flex items-center gap-1.5 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--brand)] transition-all" data-id="<?= $tid ?>" data-table="<?= $tableNumber ?>">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
                                 Edit
                             </button>
                         </div>
-                        <button class="text-gray-300 hover:text-[#BA1A1A] transition-all">
+                        <button class="btn-delete-table text-gray-300 hover:text-[#BA1A1A] transition-all" data-id="<?= $tid ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                                 <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
                             </svg>
@@ -149,14 +203,23 @@
             <?php endforeach; ?>
         </div>
 
-        <div class="flex items-center justify-center">
-            <button class="flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-black text-[var(--brand)] uppercase tracking-widest hover:bg-[var(--brand-muted)] transition-all group">
-                Lihat Semua 48 Meja
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="group-hover:translate-y-0.5 transition-transform">
-                    <polyline points="6 9 12 15 18 9"/>
+        <?php if (empty($tables)): ?>
+            <div class="flex flex-col items-center justify-center py-16">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-gray-300 mb-4">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
                 </svg>
-            </button>
-        </div>
+                <p class="text-center text-gray-400 text-sm">Belum ada meja. Tambahkan meja pertama di atas.</p>
+            </div>
+        <?php else: ?>
+            <div class="flex items-center justify-center">
+                <button class="flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-black text-[var(--brand)] uppercase tracking-widest hover:bg-[var(--brand-muted)] transition-all group">
+                    Lihat Semua <?= $totalTables ?> Meja
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="group-hover:translate-y-0.5 transition-transform">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Right Sidebar: Analytics & Bulk -->
@@ -249,68 +312,136 @@
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script>
 (function () {
-  const api = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-create.php', JSON_THROW_ON_ERROR) ?>;
+    const apiCreate = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-create.php', JSON_THROW_ON_ERROR) ?>;
+    const apiUpdate = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-update.php', JSON_THROW_ON_ERROR) ?>;
+    const apiToggle = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-toggle.php', JSON_THROW_ON_ERROR) ?>;
+    const apiDelete = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-delete.php', JSON_THROW_ON_ERROR) ?>;
 
-  document.getElementById('formAddTable')?.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const num = document.getElementById('inputTableNumber').value.trim();
+    const form = document.getElementById('formAddTable');
+    const input = document.getElementById('inputTableNumber');
     const msg = document.getElementById('addTableMsg');
-    if (!num) return;
-    msg.classList.remove('hidden', 'text-red-600', 'text-green-700');
-    msg.textContent = 'Menyimpan…';
-    msg.classList.add('text-gray-600', 'hidden');
-    msg.classList.remove('hidden');
-    try {
-      const res = await fetch(api, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ table_number: num }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        msg.classList.add('text-red-600');
-        msg.textContent = data.error || 'Gagal';
-        return;
-      }
-      window.location.reload();
-    } catch (err) {
-      msg.classList.add('text-red-600');
-      msg.textContent = 'Jaringan error';
-    }
-  });
 
-  <?php foreach ($tables as $t): $scanUrl = PublicUrl::customerScanUrl((string) $t['barcode_token']); $tid = (int) $t['id']; ?>
-  (function () {
-    const canvas = document.getElementById('qr-<?= $tid ?>');
-    const url = <?= json_encode($scanUrl, JSON_THROW_ON_ERROR) ?>;
-    if (canvas && window.QRCode) {
-      QRCode.toCanvas(canvas, url, { width: 180, margin: 1 }, function () {});
-    }
-    const svg = document.getElementById('bc-<?= $tid ?>');
-    const token = <?= json_encode((string) $t['barcode_token'], JSON_THROW_ON_ERROR) ?>;
-    if (svg && window.JsBarcode) {
-      JsBarcode(svg, token, { format: 'CODE128', displayValue: true, fontSize: 12, height: 40, margin: 4 });
-    }
-  })();
-  <?php endforeach; ?>
-
-  document.querySelectorAll('.btn-print-label').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const url = btn.getAttribute('data-url');
-      const table = btn.getAttribute('data-table');
-      const token = btn.getAttribute('data-token');
-      const w = window.open('', '_blank');
-      if (!w) return;
-      w.document.write('<html><head><title>Label Meja ' + table + '</title></head><body style="font-family:sans-serif;text-align:center;padding:24px;">');
-      w.document.write('<h2>Meja ' + table + '</h2>');
-      w.document.write('<p style="font-size:12px;word-break:break-all;">' + url + '</p>');
-      w.document.write('<p style="font-size:11px;">Token: ' + token + '</p>');
-      w.document.write('<p style="margin-top:24px;font-size:11px;color:#666;">Scan QR dari aplikasi pelanggan Scanteen</p>');
-      w.document.write('</body></html>');
-      w.document.close();
-      w.print();
+    form?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const num = input.value.trim();
+        if (!num) return;
+        msg.classList.remove('hidden'); msg.textContent = 'Menyimpan…'; msg.classList.remove('text-red-600');
+        try {
+            const res = await fetch(apiCreate, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ table_number: num }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                msg.classList.add('text-red-600'); msg.textContent = data.error || 'Gagal menyimpan';
+                return;
+            }
+            window.location.reload();
+        } catch (err) {
+            msg.classList.add('text-red-600'); msg.textContent = 'Jaringan error';
+        }
     });
-  });
+
+    // Edit, toggle, delete handlers
+    document.querySelectorAll('.btn-edit-table').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const id = btn.getAttribute('data-id');
+            const table = btn.getAttribute('data-table');
+            const newVal = prompt('Ubah nomor meja', table || '');
+            if (!newVal) return;
+            fetch(apiUpdate, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ id: parseInt(id, 10), table_number: newVal }),
+            }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
+        });
+    });
+
+    document.querySelectorAll('.btn-toggle-table').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const id = parseInt(btn.getAttribute('data-id'), 10);
+            const cur = btn.getAttribute('data-active') === '1' ? 1 : 0;
+            const next = cur === 1 ? 0 : 1;
+            fetch(apiToggle, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ id: id, is_active: next }),
+            }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
+        });
+    });
+
+    document.querySelectorAll('.btn-delete-table').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!confirm('Nonaktifkan meja ini?')) return;
+            const id = parseInt(btn.getAttribute('data-id'), 10);
+            fetch(apiDelete, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ id: id }),
+            }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
+        });
+    });
+
+    // QR preview / print
+    document.querySelectorAll('.btn-show-qr').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const url = btn.getAttribute('data-url');
+            const token = btn.getAttribute('data-token');
+            const table = btn.getAttribute('data-table');
+            const w = window.open('', '_blank');
+            if (!w) return;
+            w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Label QR - ${token}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .title { font-size: 24px; font-weight: 800; color: #1f2937; margin-bottom: 5px; letter-spacing: 1px; }
+        .subtitle { font-size: 13px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .qr-container { text-align: center; margin: 30px 0; }
+        .qr-container canvas, .qr-container img { max-width: 100%; height: auto; display: inline-block; }
+        .info { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .info-label { font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .info-value { font-size: 14px; color: #1f2937; font-weight: 600; word-break: break-all; font-family: monospace; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #d1d5db; }
+        @media print {
+            body { background: white; }
+            .footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">${table}</div>
+            <div class="subtitle">Table QR Code</div>
+        </div>
+        <div class="qr-container" id="qr"></div>
+        <div class="info">
+            <div class="info-label">Token / ID</div>
+            <div class="info-value">${token}</div>
+        </div>
+        <div class="info">
+            <div class="info-label">Scan URL</div>
+            <div class="info-value">${url}</div>
+        </div>
+        <div class="footer">
+            Scanteen • Table Management System
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
+    <script>
+        QRCode.toCanvas(document.getElementById('qr'), '${url}', { width: 250, margin: 2 }, function(err) {
+            if (err) console.log('Error:', err);
+            else setTimeout(function() { window.print(); }, 500);
+        });
+    <\/script>
+</body>
+</html>`);
+            w.document.close();
+        });
+    });
+
 })();
 </script>

@@ -75,8 +75,10 @@ final class OrderCreationService
         $serviceTax = round($subtotal * $serviceRate, 2);
         $total = round($subtotal + $serviceTax, 2);
 
-        $orderNumber = TokenGenerator::orderNumber();
         $publicToken = TokenGenerator::publicToken();
+        $orderDate = new \DateTimeImmutable('now', new \DateTimeZone(date_default_timezone_get()));
+        $orderDateYmd = $orderDate->format('Y-m-d');
+        $orderNumber = null;
 
         $deadline = (new \DateTimeImmutable('now', new \DateTimeZone(date_default_timezone_get())))
             ->modify('+15 minutes')
@@ -98,7 +100,6 @@ final class OrderCreationService
         $orderId = Database::transaction(function (mysqli $db) use (
             $venueId,
             $diningTableId,
-            $orderNumber,
             $publicToken,
             $customerName,
             $customerEmail,
@@ -109,8 +110,14 @@ final class OrderCreationService
             $total,
             $deadline,
             $gatewayOrderId,
-            $preparedLines
+            $preparedLines,
+            $orderDateYmd,
+            $orderDate,
+            &$orderNumber
         ): int {
+            $sequence = $this->nextDailySequence($db, $venueId, $orderDateYmd);
+            $orderNumber = TokenGenerator::orderNumberForDate($orderDate, $sequence);
+
             $sql = <<<SQL
                 INSERT INTO orders (
                     venue_id, dining_table_id, order_number, public_token,
@@ -193,5 +200,26 @@ final class OrderCreationService
             'order_number' => $orderNumber,
             'order_id' => $orderId,
         ];
+    }
+
+    private function nextDailySequence(mysqli $db, int $venueId, string $orderDateYmd): int
+    {
+        $upsert = <<<SQL
+            INSERT INTO order_daily_sequences (venue_id, order_date, last_sequence)
+            VALUES (?, ?, 1)
+            ON DUPLICATE KEY UPDATE last_sequence = last_sequence + 1
+            SQL;
+        $stmt = $db->prepare($upsert);
+        $stmt->bind_param('is', $venueId, $orderDateYmd);
+        $stmt->execute();
+        $stmt->close();
+
+        $select = $db->prepare('SELECT last_sequence FROM order_daily_sequences WHERE venue_id = ? AND order_date = ? LIMIT 1');
+        $select->bind_param('is', $venueId, $orderDateYmd);
+        $select->execute();
+        $row = $select->get_result()->fetch_assoc();
+        $select->close();
+
+        return max(1, (int) ($row['last_sequence'] ?? 1));
     }
 }

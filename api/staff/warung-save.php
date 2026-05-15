@@ -60,4 +60,15 @@ if ($action === 'rename') {
     scanteen_staff_json(['ok' => true]);
 }
 
+if ($action === 'delete') {
+    $id = (int) ($data['id'] ?? 0);
+    if ($id <= 0) {
+        scanteen_staff_json(['ok' => false, 'error' => 'Data tidak valid'], 422);
+    }
+    if (!$repo->softDelete($id, $venueId)) {
+        scanteen_staff_json(['ok' => false, 'error' => 'Warung tidak ditemukan'], 404);
+    }
+    scanteen_staff_json(['ok' => true]);
+}
+
 scanteen_staff_json(['ok' => false, 'error' => 'Aksi tidak dikenal'], 400);

@@ -18,13 +18,38 @@ final class OrderListRepository
             SELECT
                 o.id,
                 o.order_number,
+                CONCAT(
+                    'ORD-',
+                    DATE_FORMAT(o.created_at, '%m%d'),
+                    '-',
+                    LPAD(
+                        (
+                            SELECT COUNT(*)
+                            FROM orders o2
+                            WHERE o2.venue_id = o.venue_id
+                              AND DATE(o2.created_at) = DATE(o.created_at)
+                              AND (
+                                  o2.created_at < o.created_at
+                                  OR (o2.created_at = o.created_at AND o2.id <= o.id)
+                              )
+                        ),
+                        3,
+                        '0'
+                    )
+                ) AS display_order_number,
                 o.public_token,
                 o.customer_name,
                 o.status,
                 o.payment_method,
                 o.total,
                 o.created_at,
-                dt.table_number
+                dt.table_number,
+                (
+                    SELECT GROUP_CONCAT(DISTINCT w.name ORDER BY w.sort_order SEPARATOR ', ')
+                    FROM order_items oi
+                    INNER JOIN warungs w ON w.id = oi.warung_id
+                    WHERE oi.order_id = o.id
+                ) AS tenant_names
             FROM orders o
             INNER JOIN dining_tables dt ON dt.id = o.dining_table_id
             WHERE o.venue_id = ?
@@ -196,8 +221,15 @@ final class OrderListRepository
             $params[] = $like;
         }
 
-        $sql = 'SELECT o.id, o.order_number, o.public_token, o.customer_name, o.customer_email, o.status, '
-            . 'o.payment_method, o.total, o.subtotal, o.service_tax, o.created_at, dt.table_number '
+        $sql = 'SELECT o.id, o.order_number, '
+            . "CONCAT('ORD-', DATE_FORMAT(o.created_at, '%m%d'), '-', LPAD((SELECT COUNT(*) FROM orders o2 WHERE o2.venue_id = o.venue_id AND DATE(o2.created_at) = DATE(o.created_at) AND (o2.created_at < o.created_at OR (o2.created_at = o.created_at AND o2.id <= o.id))), 3, '0')) AS display_order_number, "
+            . 'o.public_token, o.customer_name, o.customer_email, o.status, '
+            . 'o.payment_method, o.total, o.subtotal, o.service_tax, o.created_at, dt.table_number, '
+            . '('
+            . "SELECT GROUP_CONCAT(DISTINCT w.name ORDER BY w.sort_order SEPARATOR ', ') "
+            . 'FROM order_items oi3 INNER JOIN warungs w ON w.id = oi3.warung_id '
+            . 'WHERE oi3.order_id = o.id'
+            . ') AS tenant_names '
             . 'FROM orders o INNER JOIN dining_tables dt ON dt.id = o.dining_table_id WHERE '
             . implode(' AND ', $where)
             . ' ORDER BY o.id DESC LIMIT ' . $limit;
