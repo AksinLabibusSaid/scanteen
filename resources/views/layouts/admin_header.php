@@ -56,7 +56,7 @@ $adminAvatar = $_SESSION['foto']  ?? 'https://api.builder.io/api/v1/image/assets
                      alt="Admin Profile"
                      class="w-full h-full object-cover">
             </div>
-            <a href="/scanteen/pages/staff/logout.php" class="text-xs font-bold text-[var(--brand)] hover:underline">Keluar</a>
+            <a href="/scanteen/pages/Auth/logout.php" class="text-xs font-bold text-[var(--brand)] hover:underline">Keluar</a>
         </div>
 
     </div>

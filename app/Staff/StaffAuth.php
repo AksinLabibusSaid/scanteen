@@ -98,4 +98,9 @@ final class StaffAuth
     {
         return self::check() ? (string) ($_SESSION[StaffSessionKeys::NAME] ?? '') : '';
     }
+
+    public static function userEmail(): string
+    {
+        return self::check() ? (string) ($_SESSION[StaffSessionKeys::EMAIL] ?? '') : '';
+    }
 }

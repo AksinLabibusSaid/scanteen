@@ -228,8 +228,7 @@
 
 <script>
 (function () {
-  const apiSave = <?= json_encode($api . 'menu-save.php', JSON_THROW_ON_ERROR) ?>;
-  const apiAvail = <?= json_encode($api . 'menu-availability.php', JSON_THROW_ON_ERROR) ?>;
+  const apiMenu = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/menu.php', JSON_THROW_ON_ERROR) ?>;
   document.getElementById('formMenuAdd')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -241,7 +240,7 @@
       price: parseFloat(fd.get('price')),
       is_available: 1,
     };
-    const res = await fetch(apiSave, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+    const res = await fetch(apiMenu, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
     const data = await res.json();
     const msg = document.getElementById('menuMsg');
     msg.classList.remove('hidden', 'text-red-600');
@@ -251,7 +250,7 @@
   document.querySelectorAll('.btn-menu-toggle').forEach(btn => btn.addEventListener('click', async () => {
     const menu_id = parseInt(btn.getAttribute('data-id'), 10);
     const is_available = parseInt(btn.getAttribute('data-next'), 10);
-    const res = await fetch(apiAvail, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ menu_id, is_available }) });
+    const res = await fetch(apiMenu, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action: 'availability', menu_id, is_available }) });
     const data = await res.json();
     if (!data.ok) { alert(data.error || 'Gagal'); return; }
     location.reload();

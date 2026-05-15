@@ -9,7 +9,7 @@ use App\Support\PublicUrl;
 $warungId = StaffAuth::warungId();
 $venueId = (int) StaffAuth::venueId();
 $menus = [];
-$api = PublicUrl::basePath() . '/api/staff/menu-availability.php';
+$api = PublicUrl::basePath() . '/api/staff/menu.php';
 if ($warungId !== null) {
     $menus = (new MenuRepository())->listAdminByVenue($venueId, $warungId);
 }
@@ -61,7 +61,7 @@ if ($warungId !== null) {
           document.querySelectorAll('.btn-toggle').forEach(btn => btn.addEventListener('click', async () => {
             const menu_id = parseInt(btn.getAttribute('data-id'), 10);
             const is_available = parseInt(btn.getAttribute('data-next'), 10);
-            const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ menu_id, is_available }) });
+            const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action: 'availability', menu_id, is_available }) });
             const data = await res.json();
             if (!data.ok) { alert(data.error || 'Gagal'); return; }
             location.reload();

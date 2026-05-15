@@ -12,7 +12,7 @@ $orders = [];
 if ($warungId !== null) {
     $orders = (new OrderListRepository())->listForWarung($venueId, $warungId, 150);
 }
-$apiFulfillment = PublicUrl::basePath() . '/api/staff/warung-fulfillment.php';
+$apiWarung = PublicUrl::basePath() . '/api/staff/warung.php';
 
 function scanteen_warung_fulfillment_badge(?string $s): string
 {
@@ -98,11 +98,11 @@ function scanteen_warung_fulfillment_badge(?string $s): string
     btn.addEventListener('click', async function () {
       const orderId = parseInt(btn.getAttribute('data-order'), 10);
       const status = btn.getAttribute('data-status');
-      const res = await fetch(<?= json_encode($apiFulfillment, JSON_THROW_ON_ERROR) ?>, {
+      const res = await fetch(<?= json_encode($apiWarung, JSON_THROW_ON_ERROR) ?>, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ order_id: orderId, status: status }),
+        body: JSON.stringify({ action: 'fulfillment', order_id: orderId, status: status }),
       });
       const data = await res.json();
       if (!data.ok) {

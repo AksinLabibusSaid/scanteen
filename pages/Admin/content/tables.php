@@ -312,10 +312,7 @@ $stmt3->close();
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script>
 (function () {
-    const apiCreate = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-create.php', JSON_THROW_ON_ERROR) ?>;
-    const apiUpdate = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-update.php', JSON_THROW_ON_ERROR) ?>;
-    const apiToggle = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-toggle.php', JSON_THROW_ON_ERROR) ?>;
-    const apiDelete = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table-delete.php', JSON_THROW_ON_ERROR) ?>;
+    const apiTable = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/table.php', JSON_THROW_ON_ERROR) ?>;
 
     const form = document.getElementById('formAddTable');
     const input = document.getElementById('inputTableNumber');
@@ -327,9 +324,9 @@ $stmt3->close();
         if (!num) return;
         msg.classList.remove('hidden'); msg.textContent = 'Menyimpan…'; msg.classList.remove('text-red-600');
         try {
-            const res = await fetch(apiCreate, {
+            const res = await fetch(apiTable, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ table_number: num }),
+                body: JSON.stringify({ action: 'create', table_number: num }),
             });
             const data = await res.json();
             if (!data.ok) {
@@ -349,9 +346,9 @@ $stmt3->close();
             const table = btn.getAttribute('data-table');
             const newVal = prompt('Ubah nomor meja', table || '');
             if (!newVal) return;
-            fetch(apiUpdate, {
+            fetch(apiTable, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ id: parseInt(id, 10), table_number: newVal }),
+                body: JSON.stringify({ action: 'update', id: parseInt(id, 10), table_number: newVal }),
             }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
         });
     });
@@ -361,9 +358,9 @@ $stmt3->close();
             const id = parseInt(btn.getAttribute('data-id'), 10);
             const cur = btn.getAttribute('data-active') === '1' ? 1 : 0;
             const next = cur === 1 ? 0 : 1;
-            fetch(apiToggle, {
+            fetch(apiTable, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ id: id, is_active: next }),
+                body: JSON.stringify({ action: 'toggle', id: id, is_active: next }),
             }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
         });
     });
@@ -372,9 +369,9 @@ $stmt3->close();
         btn.addEventListener('click', function () {
             if (!confirm('Nonaktifkan meja ini?')) return;
             const id = parseInt(btn.getAttribute('data-id'), 10);
-            fetch(apiDelete, {
+            fetch(apiTable, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ id: id }),
+                body: JSON.stringify({ action: 'delete', id: id }),
             }).then(r => r.json()).then(d => { if (d.ok) window.location.reload(); else alert(d.error || 'Gagal'); }).catch(() => alert('Jaringan error'));
         });
     });

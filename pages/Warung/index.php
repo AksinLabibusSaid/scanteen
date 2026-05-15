@@ -15,6 +15,7 @@ $allowedPages = [
     'orders'    => __DIR__ . '/content/orders.php',
     'menu'      => __DIR__ . '/content/menu.php',
     'history'   => __DIR__ . '/content/history.php',
+    'profile'   => dirname(__DIR__) . '/Shared/content/profile.php',
 ];
 
 $pageKey = isset($_GET['page']) ? (string) $_GET['page'] : 'dashboard';
@@ -29,6 +30,7 @@ $pageTitle = match($pageKey) {
     'orders'   => 'Pesanan',
     'menu'     => 'Manajemen Menu',
     'history'  => 'Riwayat',
+    'profile'  => 'Profil Saya',
     default    => 'Overview',
 };
 ?>
@@ -105,7 +107,7 @@ $pageTitle = match($pageKey) {
         <div class="flex flex-col flex-1 min-w-0">
 
             <!-- ===== HEADER ===== -->
-            <?php include __DIR__ . '/component/header.php'; ?>
+            <?php include dirname(__DIR__) . '/Shared/component/header.php'; ?>
 
             <!-- ===== KONTEN ===== -->
             <main class="content-area flex-1 overflow-y-auto p-6">

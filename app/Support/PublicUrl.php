@@ -39,7 +39,7 @@ final class PublicUrl
 
     public static function staffLoginPath(): string
     {
-        return self::basePath() . '/pages/staff/login.php';
+        return self::basePath() . '/pages/Auth/login.php';
     }
 
     /**

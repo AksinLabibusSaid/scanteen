@@ -173,7 +173,7 @@
 
 <script>
 (function () {
-  const api = <?= json_encode($api, JSON_THROW_ON_ERROR) ?>;
+  const api = <?= json_encode(\App\Support\PublicUrl::basePath() . '/api/staff/staff.php', JSON_THROW_ON_ERROR) ?>;
   const roleSel = document.getElementById('staffRole');
   const wrapWarung = document.getElementById('wrapWarung');
   function syncWarung() {

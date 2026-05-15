@@ -8,7 +8,7 @@ use App\Support\PublicUrl;
 
 $venueId = (int) StaffAuth::venueId();
 $orders = (new OrderListRepository())->listForVenue($venueId, 150);
-$apiMarkPaid = PublicUrl::basePath() . '/api/staff/order-mark-paid.php';
+$apiOrder = PublicUrl::basePath() . '/api/staff/order.php';
 
 function scanteen_kasir_status_label(string $s): string
 {
@@ -98,11 +98,11 @@ function scanteen_kasir_status_label(string $s): string
       const token = btn.getAttribute('data-token');
       if (!token || btn.disabled) return;
       btn.disabled = true;
-      const res = await fetch(<?= json_encode($apiMarkPaid, JSON_THROW_ON_ERROR) ?>, {
+      const res = await fetch(<?= json_encode($apiOrder, JSON_THROW_ON_ERROR) ?>, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ public_token: token }),
+        body: JSON.stringify({ action: 'mark-paid', public_token: token }),
       });
       const data = await res.json();
       if (!data.ok) {

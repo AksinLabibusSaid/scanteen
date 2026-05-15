@@ -56,7 +56,7 @@ $activePage = $activePage ?? 'dashboard';
                 <span class="font-semibold text-sm leading-5">Menu Manager</span>
             </a>
 
-            <!-- History & Laporan -->
+            <!-- Riwayat -->
             <a href="?page=history"
                class="<?= $activePage === 'history' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,16 +69,18 @@ $activePage = $activePage ?? 'dashboard';
                 <span class="font-semibold text-sm leading-5">Riwayat</span>
             </a>
 
+            </a>
+
         </nav>
     </div>
 
     <!-- Bottom Section - Logout -->
     <div class="border-t border-gray-100 p-6">
-        <a href="../../auth/logout.php" class="flex items-center gap-3 px-4 py-3 w-full text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 18C1.45 18 0.979167 17.8042 0.5875 17.4125C0.195833 17.0208 0 16.55 0 16V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H9V2H2V16H9V18H2ZM13 14L11.625 12.55L14.175 10H6V8H14.175L11.625 5.45L13 4L18 9L13 14Z" fill="currentColor"/>
+        <a href="/scanteen/pages/Auth/logout.php" class="flex items-center gap-3 px-5 py-3.5 w-full bg-gray-50 text-[var(--error-red)] hover:bg-red-50 rounded-2xl transition-all font-bold group">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="group-hover:translate-x-1 transition-transform">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
-            <span class="font-semibold text-sm leading-5">Keluar</span>
+            <span class="text-xs uppercase tracking-widest">Keluar</span>
         </a>
     </div>
 </aside>
