@@ -18,6 +18,8 @@ $allowDebit = (bool) ($venue['allow_debit'] ?? false);
 
 // Default selected method based on availability
 $defaultMethod = $allowQris ? 'qris' : ($allowCash ? 'kasir' : 'midtrans');
+
+$orderToken = isset($_GET['o']) ? (string) $_GET['o'] : '';
 ?>
 <!-- Main content -->
 <main class="flex-1 flex flex-col px-4 pt-6 pb-[105px] gap-6">
@@ -102,6 +104,7 @@ $defaultMethod = $allowQris ? 'qris' : ($allowCash ? 'kasir' : 'midtrans');
         const paymentOptions = document.querySelectorAll('.payment-option');
         const btnContinue = document.getElementById('btnContinuePayment');
         let selectedMethod = '<?= $defaultMethod ?>'; // default based on availability
+        const orderToken = '<?= $orderToken ?>';
         
         paymentOptions.forEach(option => {
             option.addEventListener('click', function(e) {
@@ -153,11 +156,14 @@ $defaultMethod = $allowQris ? 'qris' : ($allowCash ? 'kasir' : 'midtrans');
                 const payment_method = selectedMethod === 'qris' ? 'qris' : (selectedMethod === 'midtrans' ? 'midtrans' : 'kasir');
                 btnContinue.disabled = true;
                 try {
-                    const res = await fetch(apiRoot + '/order-create.php', {
+                    const url = orderToken ? apiRoot + '/order-update-payment.php' : apiRoot + '/order-create.php';
+                    const body = orderToken ? { public_token: orderToken, payment_method } : { payment_method };
+                    
+                    const res = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'same-origin',
-                        body: JSON.stringify({ payment_method }),
+                        body: JSON.stringify(body),
                     });
                     const text = await res.text();
                     let data = {};
@@ -178,12 +184,13 @@ $defaultMethod = $allowQris ? 'qris' : ($allowCash ? 'kasir' : 'midtrans');
                         btnContinue.disabled = false;
                         return;
                     }
+                    const tokenParam = orderToken ? '&o=' + encodeURIComponent(orderToken) : '';
                     if (selectedMethod === 'qris') {
-                        window.location.href = './index.php?page=bayar-qris';
+                        window.location.href = './index.php?page=bayar-qris' + tokenParam;
                     } else if (selectedMethod === 'midtrans') {
-                        window.location.href = './index.php?page=bayar-midtrans';
+                        window.location.href = './index.php?page=bayar-midtrans' + tokenParam;
                     } else {
-                        window.location.href = './index.php?page=bayar-kasir';
+                        window.location.href = './index.php?page=bayar-kasir' + tokenParam;
                     }
                 } catch (e) {
                     const show = window.ScanteenUi && typeof window.ScanteenUi.showError === 'function'

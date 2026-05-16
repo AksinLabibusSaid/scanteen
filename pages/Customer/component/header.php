@@ -34,8 +34,8 @@ $backLinks = [
     'pilih-pembayaran' => './index.php?page=checkout',
     'bayar-kasir' => './index.php?page=pilih-pembayaran',
     'bayar-qris' => './index.php?page=pilih-pembayaran',
-    'status-belum-bayar' => './index.php?page=pilih-pembayaran',
-    'status-sudah-bayar' => './index.php?page=status-belum-bayar',
+    'status-belum-bayar' => './index.php?page=home',
+    'status-sudah-bayar' => './index.php?page=home',
     'struk' => './index.php?page=status-belum-bayar',
 ];
 

@@ -32,7 +32,7 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
     </div>
 
     <!-- Payment Code Card -->
-    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col gap-6 p-6">
+    <div id="payment-card" class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col gap-6 p-6">
         <!-- Order Metadata -->
         <div class="flex justify-between items-start pt-2">
             <div class="flex flex-col gap-1">
@@ -142,11 +142,28 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
                 Status pesanan
             </span>
         </button>
-        <button class="w-14 h-14 flex-shrink-0 rounded-2xl border-2 border-[#9E1C1C] flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.95]" onclick="window.location.href='<?php echo htmlspecialchars($strukHref, ENT_QUOTES, 'UTF-8'); ?>'">
+        <button id="btn-download" class="w-14 h-14 flex-shrink-0 rounded-2xl border-2 border-[#9E1C1C] flex items-center justify-center hover:bg-gray-50 transition-all active:scale-[0.95]" title="Download">
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8.48046 12.3109L2.80216 6.63259L4.66849 4.74452L7.15544 7.24561V0H9.80548V7.24561L12.2924 4.74452L14.1588 6.63259L8.48046 12.3109ZM2.65003 16.9609C1.91162 16.9609 1.28534 16.7039 0.771205 16.1897C0.257068 15.6756 0 15.0493 0 14.3109V11.3109H2.65003V14.3109H14.3109V11.3109H16.9609V14.3109C16.9609 15.0493 16.7039 15.6756 16.1897 16.1897C15.6756 16.7039 15.0493 16.9609 14.3109 16.9609H2.65003Z" fill="#9E1C1C"/>
             </svg>
         </button>
     </div>
 </div>
+
+<!-- html2canvas for downloading card -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+document.getElementById('btn-download').addEventListener('click', function() {
+    const card = document.getElementById('payment-card');
+    html2canvas(card, {
+        scale: 2, // Higher quality
+        useCORS: true // Allow loading cross-origin images
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Pembayaran-<?php echo $orderNum; ?>.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+});
+</script>
 

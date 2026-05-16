@@ -139,6 +139,34 @@ final class OrderRepository
     }
 
     /**
+     * Semua pesanan aktif untuk meja (untuk banner home).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findAllTrackableForTable(int $diningTableId): array
+    {
+        $sql = <<<SQL
+            SELECT *
+            FROM orders
+            WHERE dining_table_id = ?
+              AND status NOT IN ('completed','cancelled')
+            ORDER BY id DESC
+            SQL;
+
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $diningTableId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $rows = [];
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+        $stmt->close();
+
+        return $rows;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function groupItemsByWarung(int $orderId): array

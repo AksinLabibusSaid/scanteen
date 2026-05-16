@@ -30,7 +30,9 @@ $bannerOrder = $activeOrderForBanner ?? null;
             </section>
 
             <!-- Active Order Status -->
-            <?php if ($bannerOrder !== null) {
+            <?php 
+            $bannerOrders = $activeOrdersForBanner ?? [];
+            foreach ($bannerOrders as $bannerOrder) {
                 $bst = (string) $bannerOrder['status'];
                 $detailPage = $bst === 'pending_payment' ? 'status-belum-bayar' : 'status-sudah-bayar';
                 $detailHref = './index.php?page=' . $detailPage . '&o=' . rawurlencode((string) $bannerOrder['public_token']);

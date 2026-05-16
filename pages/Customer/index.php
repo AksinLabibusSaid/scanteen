@@ -28,12 +28,38 @@ $customerCartSummary = null;
 $checkoutDraft = null;
 
 if ($customerHasAccess && $customerContext !== null) {
+    // Check if table was cleared by admin
+    $lastCleared = null;
+    try {
+        $mysqli = \App\Core\Database::mysqli();
+        $stmt = $mysqli->prepare("SELECT last_cleared_at FROM dining_tables WHERE id = ?");
+        $stmt->bind_param('i', $customerContext->diningTableId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        
+        $lastCleared = $row['last_cleared_at'] ?? null;
+    } catch (\Throwable $e) {
+        // Kolom mungkin belum ada (akan dibuat otomatis saat admin klik Clear pertama kali)
+    }
+    
+    $sessionCleared = $_SESSION['customer_last_seen_cleared_at'] ?? null;
+    
+    if ($lastCleared !== null && $sessionCleared !== $lastCleared) {
+        // Table was cleared (timestamp changed)!
+        (new \App\Services\CheckoutDraftService())->clear();
+        (new \App\Services\CartService())->clear();
+        
+        // Update session to match the new clear timestamp
+        $_SESSION['customer_last_seen_cleared_at'] = $lastCleared;
+    }
+
     $cartSvc = new CartService();
     $menuRepo = new MenuRepository();
     $customerCartSummary = (new CartViewBuilder($menuRepo, $cartSvc))->summarize($customerContext);
     $checkoutDraft = (new CheckoutDraftService())->get();
 
-    $activeOrderForBanner = $orderRepo->findLatestTrackableForTable($customerContext->diningTableId);
+    $activeOrdersForBanner = $orderRepo->findAllTrackableForTable($customerContext->diningTableId);
 
     $customerOrder = null;
     $tok = '';
@@ -182,12 +208,29 @@ $innerClass = 'w-full max-w-[430px] relative';
 
             <?php include __DIR__ . '/component/header.php'; ?>
 
-            <?php include $contentFile; ?>
+            <?php 
+            if (!file_exists($contentFile)) {
+                $contentFile = __DIR__ . '/content/home.php';
+            }
+            include $contentFile; 
+            ?>
 
         </div>
     </div>
     </div>
 
     <script src="/scanteen/assets/js/customer.js"></script>
+    <script>
+        // Auto-refresh when admin clears the table
+        setInterval(async () => {
+            try {
+                const res = await fetch('/scanteen/api/customer/check-clear.php');
+                const data = await res.json();
+                if (data.cleared) {
+                    window.location.reload();
+                }
+            } catch(e) {}
+        }, 3000);
+    </script>
 </body>
 </html>

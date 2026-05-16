@@ -102,12 +102,16 @@ final class OrderListRepository
                 WHERE oi.order_id = o.id AND oi.warung_id = ?
               )
               AND o.status NOT IN ('cancelled','completed','pending_payment')
+              AND NOT EXISTS (
+                SELECT 1 FROM order_warung_fulfillment f2
+                WHERE f2.order_id = o.id AND f2.warung_id = ? AND f2.status = 'ready'
+              )
             ORDER BY o.id DESC
             LIMIT {$limit}
             SQL;
 
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('iii', $warungId, $venueId, $warungId);
+        $stmt->bind_param('iiii', $warungId, $venueId, $warungId, $warungId);
         $stmt->execute();
         $res = $stmt->get_result();
         $rows = [];
@@ -134,9 +138,35 @@ final class OrderListRepository
     /**
      * @return list<array<string, mixed>>
      */
-    public function listCompletedForWarung(int $venueId, int $warungId, int $limit = 100): array
-    {
+    public function listCompletedForWarung(
+        int $venueId,
+        int $warungId,
+        ?string $date = null,
+        ?string $search = null,
+        int $limit = 100
+    ): array {
         $limit = max(1, min(300, $limit));
+
+        $where = ['o.venue_id = ?', "(o.status = 'completed' OR f.status = 'ready')"];
+        $types = 'ii';
+        $params = [$warungId, $venueId]; // warungId is used in the JOIN clause below
+
+        if ($date !== null && $date !== '') {
+            $where[] = 'DATE(o.created_at) = ?';
+            $types .= 's';
+            $params[] = $date;
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $like = '%' . trim($search) . '%';
+            $where[] = '(o.order_number LIKE ? OR o.customer_name LIKE ?)';
+            $types .= 'ss';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $whereClause = implode(' AND ', $where);
+
         $sql = <<<SQL
             SELECT DISTINCT
                 o.id,
@@ -146,21 +176,35 @@ final class OrderListRepository
                 o.status,
                 o.total,
                 o.created_at,
-                dt.table_number
+                dt.table_number,
+                (
+                    SELECT COUNT(*)
+                    FROM orders o2
+                    WHERE o2.venue_id = o.venue_id
+                      AND DATE(o2.created_at) = DATE(o.created_at)
+                      AND (
+                          o2.created_at < o.created_at
+                          OR (o2.created_at = o.created_at AND o2.id <= o.id)
+                      )
+                ) AS daily_seq
             FROM orders o
             INNER JOIN dining_tables dt ON dt.id = o.dining_table_id
             INNER JOIN order_items oi ON oi.order_id = o.id AND oi.warung_id = ?
-            WHERE o.venue_id = ?
-              AND o.status = 'completed'
+            LEFT JOIN order_warung_fulfillment f ON f.order_id = o.id AND f.warung_id = oi.warung_id
+            WHERE {$whereClause}
             ORDER BY o.id DESC
             LIMIT {$limit}
             SQL;
+
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('ii', $warungId, $venueId);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $res = $stmt->get_result();
         $rows = [];
         while ($row = $res->fetch_assoc()) {
+            $dateFormatted = (new \DateTime($row['created_at']))->format('md');
+            $seq = str_pad((string)$row['daily_seq'], 3, '0', STR_PAD_LEFT);
+            $row['display_order_number'] = "ORD-{$dateFormatted}-{$seq}";
             $rows[] = $row;
         }
         $stmt->close();
@@ -187,7 +231,13 @@ final class OrderListRepository
         $limit = max(1, min(500, $limit));
         $offset = max(0, $offset);
         $statuses = [
-            'pending_payment', 'paid', 'accepted', 'processing', 'ready', 'completed', 'cancelled',
+            'pending_payment',
+            'paid',
+            'accepted',
+            'processing',
+            'ready',
+            'completed',
+            'cancelled',
         ];
         $payments = ['qris', 'cashier'];
 
@@ -243,7 +293,7 @@ final class OrderListRepository
             . 'FROM orders o INNER JOIN dining_tables dt ON dt.id = o.dining_table_id WHERE '
             . implode(' AND ', $where)
             . ' ORDER BY o.id DESC LIMIT ? OFFSET ?';
-        
+
         $types .= 'ii';
         $params[] = $limit;
         $params[] = $offset;
@@ -282,7 +332,7 @@ final class OrderListRepository
             $types .= 's';
             $params[] = $status;
         }
-        
+
         if ($dateFrom !== null && $dateFrom !== '') {
             if ($dateTo !== null && $dateTo !== '' && $dateFrom !== $dateTo) {
                 $where[] = 'DATE(o.created_at) BETWEEN ? AND ?';

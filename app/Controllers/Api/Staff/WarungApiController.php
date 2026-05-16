@@ -81,6 +81,10 @@ final class WarungApiController extends StaffApiController
             $this->json(['ok' => false, 'error' => 'Gagal update status'], 409);
         }
 
+        if ($status === 'preparing') {
+            (new OrderWriteRepository())->markProcessingIfEligible($orderId);
+        }
+
         if ($status === 'ready' && $ful->allReadyForOrder($orderId)) {
             (new OrderWriteRepository())->markReadyIfEligible($orderId);
         }
