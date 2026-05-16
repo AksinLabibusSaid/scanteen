@@ -19,6 +19,7 @@ final class MenuRepository
                 m.name,
                 m.description,
                 m.price,
+                m.stock_quantity,
                 m.image_url,
                 m.is_available,
                 w.id AS warung_id,
@@ -102,6 +103,7 @@ final class MenuRepository
                 m.name,
                 m.description,
                 m.price,
+                m.stock_quantity,
                 m.image_url,
                 m.is_available,
                 m.warung_id,
@@ -168,9 +170,9 @@ final class MenuRepository
 
     public function setAvailability(int $menuId, int $isAvailable): bool
     {
-        $sql = 'UPDATE menus SET is_available = ? WHERE id = ?';
+        $sql = 'UPDATE menus SET is_available = ? WHERE id = ? AND (? = 0 OR stock_quantity > 0)';
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('ii', $isAvailable, $menuId);
+        $stmt->bind_param('iiii', $isAvailable, $menuId, $isAvailable);
         $stmt->execute();
         $ok = $stmt->affected_rows >= 0;
         $stmt->close();
@@ -257,5 +259,25 @@ final class MenuRepository
         }
 
         return $rows;
+    }
+    public function updateStock(int $menuId, int $warungId, int $newStock): bool
+    {
+        $sql = 'UPDATE menus SET stock_quantity = ?, is_available = (CASE WHEN ? > 0 THEN 1 ELSE 0 END) WHERE id = ? AND warung_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('iiii', $newStock, $newStock, $menuId, $warungId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows >= 0;
+        $stmt->close();
+
+        return $ok;
+    }
+
+    public function syncAvailabilityWithStock(int $warungId): void
+    {
+        $sql = 'UPDATE menus SET is_available = 0 WHERE warung_id = ? AND stock_quantity = 0';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $warungId);
+        $stmt->execute();
+        $stmt->close();
     }
 }

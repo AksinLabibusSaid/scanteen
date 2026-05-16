@@ -31,13 +31,13 @@ $activePage  = $pageKey;
 $contentFile = $allowedPages[$pageKey];
 
 $pageTitle = match($pageKey) {
-    'orders'   => 'Order Management',
-    'tenants'  => 'Tenant Management',
-    'menus'    => 'Menu Management',
-    'users'    => 'User Management',
-    'tables'   => 'Table Management',
-    'reports'  => 'Reports',
-    'settings' => 'System Settings',
+    'orders'   => 'Manajemen Pesanan',
+    'tenants'  => 'Manajemen Stan',
+    'menus'    => 'Manajemen Menu',
+    'users'    => 'Manajemen Pengguna',
+    'tables'   => 'Manajemen Meja',
+    'reports'  => 'Laporan',
+    'settings' => 'Pengaturan Sistem',
     'profile'  => 'Profil Saya',
     default    => 'Dashboard',
 };
@@ -64,7 +64,7 @@ if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolo
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand: #570000;
+            --brand: #7B0009;
             --brand-muted: #F7E9E6;
             --brand-soft: #F5E3DF;
             --text-dark: #261816;

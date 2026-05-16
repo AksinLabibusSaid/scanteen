@@ -50,4 +50,18 @@ if ($action === 'availability') {
     exit;
 }
 
+if ($action === 'stock') {
+    $menuId = (int) ($data['menu_id'] ?? 0);
+    $newStock = (int) ($data['stock'] ?? 0);
+    $warungId = (int) StaffAuth::warungId();
+    
+    if ($warungId > 0 && $repo->menuBelongsToWarung($menuId, $warungId)) {
+        $ok = $repo->updateStock($menuId, $warungId, $newStock);
+        echo json_encode(['ok' => $ok]);
+    } else {
+        echo json_encode(['ok' => false, 'error' => 'Akses ditolak']);
+    }
+    exit;
+}
+
 echo json_encode(['ok' => false, 'error' => 'Aksi tidak dikenal']);

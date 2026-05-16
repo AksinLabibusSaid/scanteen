@@ -59,16 +59,18 @@ function scanteen_admin_status_badge(string $status): string
         'ready' => 'Siap',
         'completed' => 'Selesai',
         'cancelled' => 'Batal',
-        default => ucfirst(str_replace('_', ' ', $status)),
+        default => strtoupper(str_replace('_', ' ', $status)),
     };
 }
 
 function scanteen_admin_status_class(string $status): string
 {
     return match ($status) {
-        'pending_payment' => 'bg-[#F1F3F5] text-gray-500',
-        'cancelled' => 'bg-red-50 text-red-600',
-        default => 'bg-[#FDE8E4] text-[var(--brand)]',
+        'pending_payment' => 'bg-gray-100 text-gray-500',
+        'cancelled' => 'bg-red-50 text-[var(--error-red)]',
+        'completed' => 'bg-[var(--success-bg)] text-[var(--success-green)]',
+        'paid' => 'bg-blue-50 text-blue-600',
+        default => 'bg-[var(--brand-muted)] text-[var(--brand)]',
     };
 }
 
@@ -77,192 +79,165 @@ function scanteen_admin_pm(string $pm): string
     return match ($pm) {
         'qris' => 'QRIS',
         'cashier' => 'Kasir',
-        default => ucfirst($pm),
+        default => strtoupper($pm),
     };
 }
 
 function scanteen_admin_payment_icon(string $pm): string
 {
     if ($pm === 'qris') {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--brand)]"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="7" y="7" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="7" y="18" width="1" height="1"/><rect x="18" y="18" width="1" height="1"/></svg>';
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--brand)]"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>';
     }
-
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>';
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--text-muted)] opacity-50"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>';
 }
-
 ?>
 
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
     <div>
-        <h1 class="poppins text-3xl font-bold tracking-tight text-[var(--brand)] uppercase">Dashboard</h1>
-        <p class="text-sm text-[var(--text-muted)] font-medium mt-1">Real-time performance analytics untuk venue aktif.</p>
-        <p class="text-[10px] font-bold text-[var(--text-muted)] mt-1">Format order: ORD-MMDD-SEQ, contoh ORD-0515-001.</p>
+        <h1 class="poppins text-3xl font-bold tracking-tight text-[var(--brand)] uppercase">Ringkasan Dashboard</h1>
+        <p class="text-sm text-[var(--text-muted)] font-medium mt-1">Analisis performa real-time untuk venue aktif di ekosistem Scanteen.</p>
     </div>
     <div class="flex items-center gap-3">
-        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FDE8E4] text-[var(--brand)] text-sm font-bold shadow-sm hover:bg-[#F5D5CE] transition-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Export
-        </button>
-        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--text-dark)] text-white text-sm font-bold shadow-md hover:opacity-90 transition-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Last 24h
+        <button class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[var(--brand-muted)] text-[var(--brand)] text-[11px] font-black uppercase tracking-widest hover:bg-[var(--brand-soft)] transition-all">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export Data
         </button>
     </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex flex-col justify-between h-32">
-        <p class="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Total Orders</p>
-        <p class="poppins text-3xl font-bold text-[var(--text-dark)]"><?= (int) $stats['today_orders'] ?></p>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div class="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100 flex flex-col justify-between h-40 group hover:shadow-md transition-all">
+        <p class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-50">Total Pesanan Hari Ini</p>
+        <div>
+            <p class="poppins text-4xl font-bold text-[var(--text-dark)] tracking-tighter"><?= (int) $stats['today_orders'] ?></p>
+            <p class="text-[10px] font-bold text-[var(--success-green)] mt-1 uppercase tracking-widest">Transaksi Aktif</p>
+        </div>
     </div>
 
-    <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex flex-col justify-between h-32">
-        <p class="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Warung Terlaris</p>
-        <div class="flex items-center gap-3 mt-2">
-            <div class="w-10 h-10 bg-[var(--brand)] rounded-lg flex items-center justify-center text-white">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 3h18v18H3zM9 9v6M15 9v6"/>
-                </svg>
+    <div class="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100 flex flex-col justify-between h-40 group hover:shadow-md transition-all">
+        <p class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-50">Warung Terlaris</p>
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-[var(--brand-muted)] rounded-2xl flex items-center justify-center text-[var(--brand)] border-2 border-white shadow-sm">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM9 9v6M15 9v6"/></svg>
             </div>
             <div>
-                <p class="text-sm font-bold text-[var(--text-dark)]"><?= htmlspecialchars($topWarung['name'] ?? 'Belum ada data', ENT_QUOTES, 'UTF-8') ?></p>
-                <p class="text-[10px] font-medium text-[var(--text-muted)]"><?= isset($topWarung['orders']) ? (int) $topWarung['orders'] . ' orders' : '0 orders' ?></p>
+                <p class="text-sm font-bold text-[var(--text-dark)] leading-tight"><?= htmlspecialchars($topWarung['name'] ?? 'Tidak Ada Data', ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 opacity-50"><?= isset($topWarung['orders']) ? (int) $topWarung['orders'] . ' pesanan' : '0 pesanan' ?></p>
             </div>
         </div>
     </div>
 
-    <div class="bg-[var(--brand)] p-6 rounded-[24px] shadow-lg flex flex-col justify-between h-32">
-        <p class="text-[10px] font-extrabold text-[#F5E3DF] uppercase tracking-widest opacity-80">Revenue Today</p>
-        <p class="poppins text-3xl font-bold text-white"><?= htmlspecialchars(Money::formatIdr($stats['today_revenue']), ENT_QUOTES, 'UTF-8') ?></p>
+    <div class="bg-[var(--brand)] p-8 rounded-[24px] shadow-xl shadow-red-900/10 flex flex-col justify-between h-40 relative overflow-hidden group hover:scale-[1.02] transition-all">
+        <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+        </div>
+        <p class="text-[10px] font-black text-white/50 uppercase tracking-widest">Omzet Hari Ini</p>
+        <p class="poppins text-3xl font-bold text-white tracking-tighter"><?= htmlspecialchars(Money::formatIdr($stats['today_revenue']), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 
-    <div class="bg-white p-6 rounded-[24px] shadow-sm border border-gray-50 flex flex-col justify-between h-32">
+    <div class="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100 flex flex-col justify-between h-40 group hover:shadow-md transition-all">
         <div class="flex justify-between items-start">
-            <p class="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">Growth Weekly</p>
-            <div class="flex items-end gap-0.5 h-6">
+            <p class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-50">Omzet 7 Hari</p>
+            <div class="flex items-end gap-1 h-8">
                 <?php foreach ($sparkValues as $value): ?>
-                    <div class="w-1 bg-<?= $value === max($sparkValues) ? '[var(--brand)]' : '#E9ECEF' ?> rounded-full" style="height: <?= max(4, (int) round(($value / $sparkMax) * 24)) ?>px;"></div>
+                    <div class="w-1.5 bg-<?= $value === max($sparkValues) ? '[var(--brand)]' : 'gray-100' ?> rounded-full transition-all duration-500" style="height: <?= max(4, (int) round(($value / $sparkMax) * 32)) ?>px;"></div>
                 <?php endforeach; ?>
             </div>
         </div>
         <div>
-            <p class="poppins text-xl font-bold text-[var(--text-dark)] leading-tight"><?= htmlspecialchars(Money::formatIdr($currentWeekRevenue), ENT_QUOTES, 'UTF-8') ?></p>
-            <p class="text-[10px] font-bold mt-1 <?= $weeklyGrowthPercent === null ? 'text-[var(--text-muted)]' : ($weeklyGrowthPercent >= 0 ? 'text-emerald-600' : 'text-red-600') ?>">
-                <?= $weeklyGrowthPercent === null ? 'Belum ada pembanding minggu lalu' : sprintf('%+.1f%% vs minggu lalu', $weeklyGrowthPercent) ?>
+            <p class="poppins text-lg font-bold text-[var(--text-dark)] tracking-tight leading-none"><?= htmlspecialchars(Money::formatIdr($currentWeekRevenue), ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="text-[10px] font-black mt-2 uppercase tracking-widest <?= $weeklyGrowthPercent === null ? 'text-[var(--text-muted)] opacity-50' : ($weeklyGrowthPercent >= 0 ? 'text-[var(--success-green)]' : 'text-[var(--error-red)]') ?>">
+                <?= $weeklyGrowthPercent === null ? 'Tidak Ada Data' : sprintf('%+.1f%% VS Minggu Lalu', $weeklyGrowthPercent) ?>
             </p>
         </div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-gray-50 relative overflow-hidden">
-        <div class="flex items-start justify-between mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+    <div class="lg:col-span-2 bg-white p-10 rounded-[32px] shadow-sm border border-gray-50 relative overflow-hidden">
+        <div class="flex items-start justify-between mb-10">
             <div>
-                <h3 class="poppins text-lg font-bold text-[var(--brand)]">Revenue Analytics</h3>
-                <p class="text-xs text-[var(--text-muted)] font-medium mt-1">Perbandingan omzet 7 hari terakhir dan minggu sebelumnya.</p>
+                <h3 class="poppins text-xl font-bold text-[var(--brand)]">Analisis Pendapatan</h3>
+                <p class="text-xs text-[var(--text-muted)] font-medium mt-1">Perbandingan tren omzet 7 hari terakhir.</p>
             </div>
-            <div class="flex gap-2 flex-wrap justify-end">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF7F6] border border-gray-100 rounded-full">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[var(--brand)]"></span>
-                    <span class="text-[10px] font-bold text-[var(--text-dark)]">This Week</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF7F6] border border-gray-100 rounded-full">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#F5D5CE]"></span>
-                    <span class="text-[10px] font-bold text-[var(--text-dark)]">Last Week</span>
+            <div class="flex gap-3">
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                    <span class="w-2 h-2 rounded-full bg-[var(--brand)]"></span>
+                    <span class="text-[10px] font-black text-[var(--text-dark)] uppercase tracking-widest opacity-60">Minggu Ini</span>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-end justify-between h-48 px-2 border-b border-gray-100 pb-2 relative">
-            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                <div class="w-full border-t border-gray-50 h-px"></div>
-                <div class="w-full border-t border-gray-50 h-px"></div>
-                <div class="w-full border-t border-gray-50 h-px"></div>
-                <div class="w-full border-t border-gray-50 h-px"></div>
+        <div class="flex items-end justify-between h-56 px-4 border-b border-gray-50 pb-4 relative">
+            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-5">
+                <?php for($i=0;$i<5;$i++): ?><div class="w-full border-t border-[var(--text-dark)] h-px"></div><?php endfor; ?>
             </div>
 
             <?php for ($i = 0; $i < count($chartLabels); $i++): ?>
                 <?php
                 $currentHeight = max(4, (int) round(($currentWeekValues[$i] / $chartMax) * 100));
-                $previousHeight = max(4, (int) round(($previousWeekValues[$i] / $chartMax) * 100));
+                $isMax = $currentWeekValues[$i] > 0 && $currentWeekValues[$i] === max($currentWeekValues);
                 ?>
-                <div class="flex flex-col items-center flex-1 max-w-[60px] relative z-10">
-                    <div class="flex items-end gap-1.5 w-full justify-center">
-                        <div class="w-4 bg-[var(--brand-soft)] rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer" style="height: <?= $previousHeight ?>%;"></div>
-                        <div class="w-4 <?= $currentWeekValues[$i] > 0 && $currentWeekValues[$i] === max($currentWeekValues) ? 'bg-[var(--brand)]' : 'bg-[var(--brand-soft)]' ?> rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer" style="height: <?= $currentHeight ?>%;"></div>
+                <div class="flex flex-col items-center flex-1 max-w-[80px] relative z-10 group/bar">
+                    <div class="w-full flex justify-center">
+                        <div class="w-5 <?= $isMax ? 'bg-[var(--brand)] shadow-lg shadow-red-900/10' : 'bg-[var(--brand-muted)] opacity-60' ?> rounded-t-xl transition-all duration-500 hover:scale-x-110 cursor-pointer relative" style="height: <?= $currentHeight ?>%;">
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-[var(--text-dark)] text-white text-[9px] font-black px-2 py-1 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-20">
+                                <?= Money::formatIdr($currentWeekValues[$i]) ?>
+                            </div>
+                        </div>
                     </div>
-                    <span class="text-[9px] font-bold text-gray-400 mt-3"><?= htmlspecialchars($chartLabels[$i], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="text-[10px] font-black text-[var(--text-muted)] mt-5 uppercase tracking-widest opacity-40"><?= htmlspecialchars($chartLabels[$i], ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
             <?php endfor; ?>
         </div>
     </div>
 
-    <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-50">
-        <h3 class="poppins text-lg font-bold text-[var(--brand)] mb-8">Payment Distribution</h3>
+    <div class="bg-white p-10 rounded-[32px] shadow-sm border border-gray-50 flex flex-col">
+        <h3 class="poppins text-xl font-bold text-[var(--brand)] mb-10">Proporsi Pembayaran</h3>
 
-        <div class="flex flex-col items-center">
-            <div class="relative w-40 h-40 flex items-center justify-center">
+        <div class="flex-1 flex flex-col items-center justify-center">
+            <div class="relative w-44 h-44 flex items-center justify-center">
                 <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="#FDE8E4" stroke-width="3" stroke-dasharray="100, 100" />
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--brand)" stroke-width="4" stroke-dasharray="<?= $digitalShare ?>, 100" />
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--brand-muted)" stroke-width="4" stroke-dasharray="100, 100" />
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--brand)" stroke-width="5" stroke-dasharray="<?= $digitalShare ?>, 100" stroke-linecap="round" />
                 </svg>
                 <div class="absolute flex flex-col items-center">
-                    <span class="poppins text-2xl font-black text-[var(--text-dark)] leading-none"><?= $digitalShare ?>%</span>
-                    <span class="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Digital</span>
+                    <span class="poppins text-3xl font-bold text-[var(--text-dark)] leading-none"><?= $digitalShare ?>%</span>
+                    <span class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-2 opacity-50">QRIS</span>
                 </div>
-                <div class="absolute left-0 top-1/2 -translate-x-1/2 w-6 h-4 bg-[#F5D5CE] rounded shadow-sm"></div>
             </div>
 
-            <div class="w-full mt-10 space-y-4">
-                <div class="flex items-center justify-between">
+            <div class="w-full mt-12 space-y-5">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <div class="flex items-center gap-3">
-                        <span class="w-2 h-2 rounded-full bg-[var(--brand)]"></span>
-                        <span class="text-xs font-bold text-[var(--text-dark)]">QRIS / Digital</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[var(--brand)]"></span>
+                        <span class="text-[11px] font-black text-[var(--text-dark)] uppercase tracking-widest opacity-70">QRIS / Digital</span>
                     </div>
-                    <span class="text-xs font-black text-[var(--text-dark)]"><?= htmlspecialchars(Money::formatIdr($digitalRevenue), ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="text-xs font-black text-[var(--text-dark)] poppins"><?= htmlspecialchars(Money::formatIdr($digitalRevenue), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100">
                     <div class="flex items-center gap-3">
-                        <span class="w-2 h-2 rounded-full bg-[#FDE8E4]"></span>
-                        <span class="text-xs font-bold text-[var(--text-dark)]">Cash Payment</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[var(--brand-muted)]"></span>
+                        <span class="text-[11px] font-black text-[var(--text-dark)] uppercase tracking-widest opacity-40">Tunai / Kasir</span>
                     </div>
-                    <span class="text-xs font-black text-[var(--text-dark)]"><?= htmlspecialchars(Money::formatIdr($cashRevenue), ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="text-xs font-black text-[var(--text-dark)] poppins"><?= htmlspecialchars(Money::formatIdr($cashRevenue), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden">
-    <div class="px-10 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h3 class="poppins text-lg font-bold text-[var(--brand)]">Recent Transactions</h3>
+<div class="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-10 py-8 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+            <h3 class="poppins text-lg font-bold text-[var(--brand)]">Transaksi Terbaru</h3>
+            <p class="text-xs text-[var(--text-muted)] font-medium mt-1">Menampilkan aktivitas penjualan terkini di semua stan.</p>
+        </div>
 
         <div class="flex flex-wrap items-center gap-6">
-            <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Filter:</span>
-                <div class="relative">
-                    <select class="appearance-none bg-[#FDE8E4] text-[var(--brand)] text-[11px] font-bold px-4 py-2 pr-10 rounded-full border-none outline-none focus:ring-2 focus:ring-[var(--brand-soft)] transition-all cursor-pointer">
-                        <option>Semua Warung</option>
-                        <option>Warung Barokah</option>
-                        <option>Artisan Bakery</option>
-                    </select>
-                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--brand)]" width="10" height="6" viewBox="0 0 10 6" fill="none">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-            <a href="?page=orders" class="text-[11px] font-black text-[var(--brand)] uppercase tracking-widest hover:opacity-70 flex items-center gap-1">
-                View All Activity
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
+            <a href="?page=orders" class="px-5 py-2.5 bg-gray-50 text-[var(--brand)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all flex items-center gap-3 group">
+                Kelola Semua Pesanan
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
         </div>
     </div>
@@ -271,19 +246,18 @@ function scanteen_admin_payment_icon(string $pm): string
         <table class="w-full">
             <thead class="bg-[#FAF7F6]">
                 <tr>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Order ID</th>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Tenant</th>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Customer</th>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Amount</th>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Payment</th>
-                    <th class="px-10 py-5 text-left text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Status</th>
-                    <th class="px-10 py-5 text-center text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Action</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">ID Pesanan</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Stan / Tenant</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Pelanggan</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Total Harga</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Metode Bayar</th>
+                    <th class="px-10 py-5 text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-50">
                 <?php if ($recent === []): ?>
                     <tr>
-                        <td colspan="7" class="px-10 py-8 text-center text-gray-400 text-sm">Belum ada pesanan.</td>
+                        <td colspan="6" class="px-10 py-20 text-center text-[var(--text-muted)] text-sm font-medium">Belum ada transaksi terekam hari ini.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($recent as $tx): ?>
@@ -292,38 +266,31 @@ function scanteen_admin_payment_icon(string $pm): string
                         $paymentMethod = (string) ($tx['payment_method'] ?? '');
                         ?>
                         <tr class="hover:bg-[#FAF7F6] transition-colors group">
-                            <td class="px-10 py-6 text-sm font-black text-[var(--brand)]"><?= htmlspecialchars((string) $tx['order_number'], ENT_QUOTES, 'UTF-8') ?></td>
-                            <td class="px-10 py-6 text-sm font-bold text-[var(--text-dark)] opacity-70"><?= htmlspecialchars((string) ($tx['tenant_names'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td class="px-10 py-6 text-sm font-bold text-[var(--text-dark)] opacity-70"><?= htmlspecialchars((string) ($tx['customer_name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td class="px-10 py-6 text-sm font-black text-[var(--text-dark)]"><?= htmlspecialchars(Money::formatIdr((float) $tx['total']), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="px-10 py-6">
-                                <div class="flex items-center gap-2">
-                                    <?= scanteen_admin_payment_icon($paymentMethod) ?>
-                                    <span class="text-[11px] font-extrabold text-[var(--text-dark)] opacity-70"><?= htmlspecialchars(scanteen_admin_pm($paymentMethod), ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="text-sm font-black text-[var(--brand)]">#<?= htmlspecialchars((string) $tx['order_number'], ENT_QUOTES, 'UTF-8') ?></span>
+                            </td>
+                            <td class="px-10 py-6 text-sm font-bold text-[var(--text-dark)] opacity-70">
+                                <div class="truncate max-w-[150px]"><?= htmlspecialchars((string) ($tx['tenant_names'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></div>
+                            </td>
+                            <td class="px-10 py-6 text-sm font-bold text-[var(--text-dark)] opacity-70"><?= htmlspecialchars((string) ($tx['customer_name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td class="px-10 py-6 text-sm font-black text-[var(--text-dark)] poppins"><?= htmlspecialchars(Money::formatIdr((float) $tx['total']), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 opacity-60">
+                                        <?= scanteen_admin_payment_icon($paymentMethod) ?>
+                                    </div>
+                                    <span class="text-[10px] font-black text-[var(--text-dark)] opacity-40 uppercase tracking-widest"><?= htmlspecialchars(scanteen_admin_pm($paymentMethod), ENT_QUOTES, 'UTF-8') ?></span>
                                 </div>
                             </td>
                             <td class="px-10 py-6">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black <?= scanteen_admin_status_class($status) ?>">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black <?= scanteen_admin_status_class($status) ?> uppercase tracking-widest border border-current/10">
                                     <?= htmlspecialchars(scanteen_admin_status_badge($status), ENT_QUOTES, 'UTF-8') ?>
                                 </span>
-                            </td>
-                            <td class="px-10 py-6 text-center">
-                                <button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white hover:shadow-sm text-gray-400 hover:text-[var(--brand)] transition-all">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                        <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
-                                    </svg>
-                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
         </table>
-    </div>
-
-    <div class="px-10 py-8 text-center bg-[#FAF7F6]/50">
-        <button class="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[1px] hover:text-[var(--brand)] transition-colors">
-            Load More Transactions
-        </button>
     </div>
 </div>

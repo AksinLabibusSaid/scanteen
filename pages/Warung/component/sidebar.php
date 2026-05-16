@@ -32,7 +32,7 @@ $activePage = $activePage ?? 'dashboard';
                     <path d="M10 6V0H18V6H10ZM0 10V0H8V10H0ZM10 18V8H18V18H10ZM0 18V12H8V18H0ZM2 8H6V2H2V8ZM12 16H16V10H12V16ZM12 4H16V2H12V4ZM2 16H6V14H2V16Z"
                           fill="<?= $activePage === 'dashboard' ? 'var(--brand)' : '#6B7280' ?>"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5">Overview</span>
+                <span class="font-semibold text-sm leading-5">Ringkasan</span>
             </a>
 
             <!-- Orders -->
@@ -42,7 +42,7 @@ $activePage = $activePage ?? 'dashboard';
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 2h12l2 4H4l2-4zm14 16H4V8h16v12zm-8-9a3 3 0 0 1-3-3V7h2v1a1 1 0 0 0 2 0V7h2v1a3 3 0 0 1-3 3z"
                           fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5">Orders</span>
+                <span class="font-semibold text-sm leading-5">Pesanan</span>
             </a>
 
             <!-- Menu Manager -->
@@ -53,7 +53,7 @@ $activePage = $activePage ?? 'dashboard';
                           fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>"/>
                     <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.4"/>
                 </svg>
-                <span class="font-semibold text-sm leading-5">Menu Manager</span>
+                <span class="font-semibold text-sm leading-5">Manajemen Menu</span>
             </a>
 
             <!-- Riwayat -->
