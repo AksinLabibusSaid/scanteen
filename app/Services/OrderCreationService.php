@@ -56,6 +56,9 @@ final class OrderCreationService
             if ((int) $m['is_available'] !== 1) {
                 throw new \InvalidArgumentException('Menu tidak tersedia: ' . $m['name']);
             }
+            if ((int) ($m['stock_quantity'] ?? 0) < $line['qty']) {
+                throw new \InvalidArgumentException('Stok tidak mencukupi untuk menu: ' . $m['name']);
+            }
             $unit = (float) $m['price'];
             $qty = $line['qty'];
             $lineSub = $unit * $qty;

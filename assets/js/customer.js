@@ -165,16 +165,25 @@ function renderMenuItems() {
     const card = document.createElement("div");
     card.className = "rounded-[20px] bg-white shadow-[3px_3px_15px_0_rgba(0,0,0,0.15)] overflow-hidden";
 
+    const isDisabled = (item.is_available === 0) || ((item.stock ?? 0) <= 0);
     card.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" class="w-full h-[149px] object-cover">
+      <div class="relative">
+          <img src="${item.image}" alt="${item.name}" class="w-full h-[149px] object-cover ${isDisabled ? 'opacity-40 grayscale' : ''}">
+          ${isDisabled ? `
+          <div class="absolute inset-0 flex items-center justify-center">
+              <span class="bg-black/60 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Habis</span>
+          </div>
+          ` : ''}
+      </div>
       <div class="p-0 pt-2 pb-4 px-3 text-center">
           <p class="text-base font-bold text-black font-plus-jakarta leading-tight">${item.name}</p>
           <p class="text-xs text-[#919191] mt-0.5">${item.warung}</p>
           <p class="text-sm font-semibold text-maroon font-plus-jakarta mt-1">${formatRupiah(item.price)}</p>
-          <button type="button" class="mt-2 w-[132px] h-[26px] rounded-[20px] text-[10px] font-semibold font-plus-jakarta transition-all menu-add-btn"
-              style="background-color: #8B2424; color: white; border: 1px solid transparent;"
-              data-menu-id="${item.id}">
-              Tambah
+          <button type="button" class="mt-2 w-[132px] h-[26px] rounded-[20px] text-[10px] font-semibold font-plus-jakarta transition-all menu-add-btn ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
+              style="background-color: ${isDisabled ? '#9CA3AF' : '#8B2424'}; color: white; border: 1px solid transparent;"
+              data-menu-id="${item.id}"
+              ${isDisabled ? 'disabled' : ''}>
+              ${isDisabled ? 'Habis' : 'Tambah'}
           </button>
       </div>
     `;

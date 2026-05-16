@@ -35,6 +35,8 @@ scanteen_json_response([
             'id' => (int) $r['id'],
             'name' => (string) $r['name'],
             'price' => (float) $r['price'],
+            'stock' => (int) ($r['stock_quantity'] ?? 0),
+            'is_available' => (int) ($r['is_available'] ?? 0),
             'image' => (string) ($r['image_url'] ?? ''),
             'warung' => (string) $r['warung_name'],
             'warung_id' => (int) $r['warung_id'],

@@ -183,9 +183,9 @@ $apiBase = PublicUrl::basePath();
                     <?php endif; ?>
 
                     <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl mb-4 border border-gray-100">
-                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Status Stok:</span>
+                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Status Menu:</span>
                         <span class="text-[9px] font-black <?= $isAvailable ? 'text-[#16A34A]' : 'text-[#BA1A1A]' ?>">
-                            <?= $isAvailable ? 'TERSEDIA' : 'HABIS' ?>
+                            <?= $isAvailable ? 'AKTIF' : 'NONAKTIF' ?>
                         </span>
                     </div>
 
