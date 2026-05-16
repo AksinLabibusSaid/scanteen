@@ -94,7 +94,7 @@ if ($pageKey === 'struk') {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand: #570000;
+            --brand: #7B0009;
             --brand-muted: #F7E9E6;
             --brand-soft: #F5E3DF;
             --text-dark: #261816;

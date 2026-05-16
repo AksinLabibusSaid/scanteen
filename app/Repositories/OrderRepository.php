@@ -187,4 +187,59 @@ final class OrderRepository
 
         return array_values($groups);
     }
+
+    public function getDetailWithGroups(int $orderId): ?array
+    {
+        $order = $this->findById($orderId);
+        if ($order === null) {
+            return null;
+        }
+
+        // Add display_number for consistency with UI
+        $order['display_number'] = $order['order_number'];
+
+        return [
+            'order' => $order,
+            'groups' => $this->groupItemsByWarung($orderId),
+        ];
+    }
+
+    public function getWarungOrderDetail(int $orderId, int $warungId): ?array
+    {
+        $order = $this->findById($orderId);
+        if ($order === null) {
+            return null;
+        }
+
+        // Fetch fulfillment status for this specific warung
+        $sql = 'SELECT status, updated_at FROM order_warung_fulfillment WHERE order_id = ? AND warung_id = ? LIMIT 1';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $orderId, $warungId);
+        $stmt->execute();
+        $ful = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        // Fetch only items for this warung
+        $sqlItems = <<<SQL
+            SELECT oi.menu_name_snapshot, oi.quantity, oi.unit_price, oi.line_subtotal, oi.note
+            FROM order_items oi
+            WHERE oi.order_id = ? AND oi.warung_id = ?
+            SQL;
+        $stmtItems = Database::mysqli()->prepare($sqlItems);
+        $stmtItems->bind_param('ii', $orderId, $warungId);
+        $stmtItems->execute();
+        $resItems = $stmtItems->get_result();
+        $items = [];
+        while ($item = $resItems->fetch_assoc()) {
+            $items[] = $item;
+        }
+        $stmtItems->close();
+
+        return [
+            'order' => $order,
+            'fulfillment_status' => $ful['status'] ?? 'new',
+            'fulfillment_updated_at' => $ful['updated_at'] ?? null,
+            'items' => $items,
+        ];
+    }
 }

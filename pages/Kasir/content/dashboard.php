@@ -41,63 +41,63 @@ function scanteen_kdash_status_label(string $s): string
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-            <h1 class="text-4xl font-bold text-[#261817] tracking-tight">Ringkasan Venue</h1>
-            <p class="text-gray-500 text-lg mt-2 font-medium">Selamat datang kembali, <span class="text-[#7B0009] font-bold"><?= htmlspecialchars((string) StaffAuth::userName(), ENT_QUOTES, 'UTF-8') ?></span>.</p>
+            <h1 class="poppins text-4xl font-bold text-[var(--text-dark)] tracking-tight">Ringkasan Venue</h1>
+            <p class="text-[var(--text-muted)] text-lg mt-2 font-medium">Selamat datang kembali, <span class="text-[var(--brand)] font-bold"><?= htmlspecialchars((string) StaffAuth::userName(), ENT_QUOTES, 'UTF-8') ?></span>.</p>
         </div>
         <div class="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm">
-            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Sistem Aktif</span>
+            <div class="w-3 h-3 rounded-full bg-[var(--success-green)] animate-pulse"></div>
+            <span class="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Sistem Aktif</span>
         </div>
     </div>
 
     <!-- Stats Section -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/30 relative overflow-hidden group">
-            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#00C853] group-hover:w-3 transition-all"></div>
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Pesanan Hari Ini</p>
-            <div class="flex items-baseline gap-3 mt-2">
-                <h3 class="text-4xl font-black text-[#261817]"><?= (int) $kpis['today_orders'] ?></h3>
-                <span class="text-gray-400 text-sm font-bold uppercase tracking-wide">transaksi</span>
+        <div class="bg-white p-8 rounded-[24px] border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--success-green)] group-hover:w-3 transition-all"></div>
+            <p class="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">Pesanan Hari Ini</p>
+            <div class="flex items-baseline gap-3 mt-4">
+                <h3 class="poppins text-4xl font-bold text-[var(--text-dark)] tracking-tighter"><?= (int) $kpis['today_orders'] ?></h3>
+                <span class="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wide opacity-50">transaksi</span>
             </div>
         </div>
         
-        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/30 relative overflow-hidden group">
-            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#FF9100] group-hover:w-3 transition-all"></div>
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Menunggu Bayar</p>
-            <div class="flex items-baseline gap-3 mt-2">
-                <h3 class="text-4xl font-black text-[#FF9100]"><?= (int) $kpis['pending_payment'] ?></h3>
-                <span class="text-gray-400 text-sm font-bold uppercase tracking-wide">antrean</span>
+        <div class="bg-white p-8 rounded-[24px] border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-500 group-hover:w-3 transition-all"></div>
+            <p class="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">Menunggu Bayar</p>
+            <div class="flex items-baseline gap-3 mt-4">
+                <h3 class="poppins text-4xl font-bold text-orange-500 tracking-tighter"><?= (int) $kpis['pending_payment'] ?></h3>
+                <span class="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wide opacity-50">antrean</span>
             </div>
         </div>
 
-        <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/30 relative overflow-hidden group">
-            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#7B0009] group-hover:w-3 transition-all"></div>
-            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Omzet Hari Ini</p>
-            <div class="flex items-baseline gap-2 mt-2">
-                <h3 class="text-3xl font-black text-[#261817]"><?= htmlspecialchars(Money::formatIdr($kpis['today_revenue']), ENT_QUOTES, 'UTF-8') ?></h3>
+        <div class="bg-white p-8 rounded-[24px] border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--brand)] group-hover:w-3 transition-all"></div>
+            <p class="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">Omzet Hari Ini</p>
+            <div class="flex items-baseline gap-2 mt-4">
+                <h3 class="poppins text-2xl font-bold text-[var(--text-dark)] tracking-tight"><?= htmlspecialchars(Money::formatIdr($kpis['today_revenue']), ENT_QUOTES, 'UTF-8') ?></h3>
             </div>
         </div>
 
-        <div class="bg-[#7B0009] p-8 rounded-[2rem] shadow-2xl shadow-red-900/20 text-white relative overflow-hidden">
-            <p class="text-red-300/80 text-[10px] font-black uppercase tracking-[0.2em]">Omzet 7 Hari</p>
-            <h3 class="text-2xl font-black mt-2 leading-tight"><?= htmlspecialchars(Money::formatIdr($kpis['week_revenue']), ENT_QUOTES, 'UTF-8') ?></h3>
-            <p class="text-red-200/60 text-xs font-bold mt-1 tracking-widest">Data Real-time</p>
+        <div class="bg-[var(--brand)] p-8 rounded-[24px] shadow-lg shadow-red-900/10 text-white relative overflow-hidden group transition-all hover:scale-[1.02]">
+            <p class="text-white/50 text-[10px] font-black uppercase tracking-[0.2em]">Omzet 7 Hari</p>
+            <h3 class="poppins text-2xl font-bold mt-4 leading-tight tracking-tight"><?= htmlspecialchars(Money::formatIdr($kpis['week_revenue']), ENT_QUOTES, 'UTF-8') ?></h3>
+            <p class="text-white/30 text-[10px] font-bold mt-2 tracking-widest italic">Data Real-time</p>
         </div>
     </div>
 
     <!-- Recent Orders Table -->
-    <div class="bg-white rounded-[2.5rem] shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
-        <div class="flex items-center justify-between px-10 py-8 border-b border-gray-50">
+    <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden">
+        <div class="flex items-center justify-between px-10 py-8 border-b border-gray-50 bg-white">
             <div>
-                <h2 class="text-xl font-black text-[#261817]">Pesanan Terbaru</h2>
-                <p class="text-gray-400 text-xs font-medium mt-1">Menampilkan 8 transaksi terakhir yang masuk.</p>
+                <h2 class="poppins text-lg font-bold text-[var(--brand)]">Pesanan Terbaru</h2>
+                <p class="text-[var(--text-muted)] text-xs font-medium mt-1">Menampilkan 8 transaksi terakhir yang masuk.</p>
             </div>
-            <a href="?page=orders" class="px-6 py-2.5 bg-[#7B0009]/5 text-[#7B0009] rounded-xl text-xs font-bold hover:bg-[#7B0009] hover:text-white transition-all duration-300">Lihat Semua</a>
+            <a href="?page=orders" class="px-5 py-2.5 bg-[#FAF7F6] text-[var(--brand)] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all">Lihat Semua</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full border-collapse">
                 <thead>
-                    <tr class="bg-[#FFF5F5] border-b border-gray-50 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                    <tr class="bg-[#FAF7F6] text-left text-[9px] font-extrabold text-[var(--text-muted)] uppercase tracking-[2px]">
                         <th class="px-10 py-5">No. Pesanan</th>
                         <th class="px-6 py-5">Meja</th>
                         <th class="px-6 py-5">Pelanggan</th>
@@ -110,31 +110,31 @@ function scanteen_kdash_status_label(string $s): string
                     <?php if (empty($recent)): ?>
                         <tr>
                             <td colspan="6" class="px-10 py-20 text-center">
-                                <p class="text-gray-400 font-medium">Belum ada pesanan terbaru.</p>
+                                <p class="text-[var(--text-muted)] font-medium text-sm">Belum ada pesanan terbaru.</p>
                             </td>
                         </tr>
                     <?php endif; ?>
 
                     <?php foreach ($recent as $o): ?>
-                        <tr class="group hover:bg-[#FFFAFA] transition-colors">
+                        <tr class="group hover:bg-[#FAF7F6] transition-colors">
                             <td class="px-10 py-6">
-                                <span class="font-bold text-[#261817]">#<?= htmlspecialchars((string) $o['order_number'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="font-black text-[var(--brand)]">#<?= htmlspecialchars((string) $o['order_number'], ENT_QUOTES, 'UTF-8') ?></span>
                             </td>
                             <td class="px-6 py-6">
-                                <span class="px-3 py-1 bg-gray-50 rounded-lg text-xs font-bold text-gray-500">T-<?= htmlspecialchars((string) $o['table_number'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="px-3 py-1 bg-gray-50 rounded-lg text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest border border-gray-100">T-<?= htmlspecialchars((string) $o['table_number'], ENT_QUOTES, 'UTF-8') ?></span>
                             </td>
-                            <td class="px-6 py-6 text-sm font-bold text-gray-600">
+                            <td class="px-6 py-6 text-sm font-bold text-[var(--text-dark)] opacity-70">
                                 <?= htmlspecialchars((string) ($o['customer_name'] ?? 'Umum'), ENT_QUOTES, 'UTF-8') ?>
                             </td>
-                            <td class="px-6 py-6 font-black text-[#261817]">
+                            <td class="px-6 py-6 font-black text-[var(--text-dark)]">
                                 <?= htmlspecialchars(Money::formatIdr((float) $o['total']), ENT_QUOTES, 'UTF-8') ?>
                             </td>
                             <td class="px-6 py-6">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black border tracking-wider <?= scanteen_kdash_status_badge((string) $o['status']) ?>">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black border tracking-widest <?= scanteen_kdash_status_badge((string) $o['status']) ?>">
                                     <?= scanteen_kdash_status_label((string) $o['status']) ?>
                                 </span>
                             </td>
-                            <td class="px-10 py-6 text-right text-xs font-bold text-gray-400">
+                            <td class="px-10 py-6 text-right text-[11px] font-bold text-[var(--text-muted)] opacity-60">
                                 <?= date('H:i', strtotime((string) $o['created_at'])) ?>
                             </td>
                         </tr>

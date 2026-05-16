@@ -23,6 +23,9 @@ final class WarungApiController extends StaffApiController
             case 'fulfillment':
                 $this->fulfillment($data);
                 break;
+            case 'detail':
+                $this->detail($data);
+                break;
             case 'create':
                 $this->create($data);
                 break;
@@ -161,5 +164,31 @@ final class WarungApiController extends StaffApiController
         }
 
         $this->json(['ok' => true]);
+    }
+
+    private function detail(array $data): void
+    {
+        $venueId = (int) StaffAuth::venueId();
+        $orderId = (int) ($data['order_id'] ?? 0);
+        $warungId = StaffAuth::warungId();
+
+        if ($orderId <= 0 || $warungId === null) {
+            $this->json(['ok' => false, 'error' => 'Data tidak valid'], 422);
+        }
+
+        $repo = new OrderRepository();
+        $detail = $repo->getWarungOrderDetail($orderId, $warungId);
+
+        if ($detail === null || (int) $detail['order']['venue_id'] !== $venueId) {
+            $this->json(['ok' => false, 'error' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        $this->json([
+            'ok' => true, 
+            'order' => $detail['order'], 
+            'items' => $detail['items'], 
+            'fulfillment_status' => $detail['fulfillment_status'],
+            'fulfillment_updated_at' => $detail['fulfillment_updated_at']
+        ]);
     }
 }
