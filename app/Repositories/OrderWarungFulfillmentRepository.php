@@ -28,19 +28,17 @@ final class OrderWarungFulfillmentRepository
         }
 
         $sql = <<<SQL
-            UPDATE order_warung_fulfillment
-            SET status = ?
-            WHERE order_id = ?
-              AND warung_id = ?
+            INSERT INTO order_warung_fulfillment (order_id, warung_id, status)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE status = VALUES(status)
             SQL;
 
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('sii', $status, $orderId, $warungId);
-        $stmt->execute();
-        $n = $stmt->affected_rows;
+        $stmt->bind_param('iis', $orderId, $warungId, $status);
+        $ok = $stmt->execute();
         $stmt->close();
 
-        return $n >= 1;
+        return $ok;
     }
 
     public function allReadyForOrder(int $orderId): bool

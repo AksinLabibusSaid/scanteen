@@ -44,6 +44,26 @@ function scanteen_ful_badge_styles(string $status): array
 ?>
 
 <div class="flex flex-col gap-10 pb-10">
+    <?php if ($stats['incoming'] > 0): ?>
+        <!-- Premium Warning Notification Alert Banner -->
+        <div class="flex flex-col md:flex-row items-center justify-between p-6 bg-orange-50 border border-orange-200/80 rounded-[24px] shadow-sm gap-4 transition-all">
+            <div class="flex items-center gap-4">
+                <!-- Animated Ring Dot -->
+                <div class="relative flex h-5 w-5 flex-shrink-0">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-5 w-5 bg-orange-500 flex items-center justify-center text-white text-[10px] font-black">!</span>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-orange-950 leading-snug">Ada Pesanan Baru Masuk!</h4>
+                    <p class="text-xs text-orange-700 font-medium mt-0.5">Terdapat <span class="font-extrabold text-orange-950"><?= $stats['incoming'] ?> pesanan baru</span> yang siap untuk Anda proses.</p>
+                </div>
+            </div>
+            <button onclick="location.reload()" class="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-900/10 hover:scale-[1.02] active:scale-95 transition-all">
+                Perbarui Daftar
+            </button>
+        </div>
+    <?php endif; ?>
+
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="bg-white p-8 rounded-[24px] shadow-sm border border-gray-50 relative overflow-hidden group transition-all hover:shadow-md">
@@ -91,10 +111,26 @@ function scanteen_ful_badge_styles(string $status): array
         <div class="p-8 border-b border-gray-50 flex flex-col lg:flex-row items-center justify-between gap-6">
             <h2 class="poppins text-2xl font-bold text-[var(--text-dark)]">Live Order Queue</h2>
             <div class="flex items-center gap-4 w-full lg:w-auto">
-                <div class="flex bg-[var(--brand-soft)]/50 p-1 rounded-xl">
-                    <button class="px-6 py-2 bg-white shadow-sm rounded-lg text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Semua</button>
-                    <button class="px-6 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)]">Baru</button>
-                    <button class="px-6 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)]">Proses</button>
+                <div class="flex bg-[var(--brand-soft)]/50 p-1 rounded-xl items-center gap-1">
+                    <button id="filter-btn-all" class="px-5 py-2 bg-white shadow-sm rounded-lg text-[10px] font-black text-[var(--brand)] uppercase tracking-widest flex items-center gap-2 transition-all">
+                        Semua
+                    </button>
+                    <button id="filter-btn-new" class="px-5 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)] flex items-center gap-2 transition-all">
+                        Baru
+                        <?php if ($stats['incoming'] > 0): ?>
+                            <span class="flex items-center justify-center min-w-[16px] h-4 bg-[var(--brand)] text-white text-[9px] px-1 rounded-full font-bold shadow-sm" style="color: #ffffff !important;">
+                                <?= $stats['incoming'] ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
+                    <button id="filter-btn-preparing" class="px-5 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)] flex items-center gap-2 transition-all">
+                        Proses
+                        <?php if ($stats['preparing'] > 0): ?>
+                            <span class="flex items-center justify-center min-w-[16px] h-4 bg-orange-500 text-white text-[9px] px-1 rounded-full font-bold shadow-sm" style="color: #ffffff !important;">
+                                <?= $stats['preparing'] ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
                 </div>
             </div>
         </div>
@@ -112,18 +148,16 @@ function scanteen_ful_badge_styles(string $status): array
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                    <?php if (empty($orders)): ?>
-                        <tr>
-                            <td colspan="6" class="px-10 py-20 text-center">
-                                <div class="flex flex-col items-center gap-4">
-                                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-200">
-                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                                    </div>
-                                    <p class="text-[var(--text-muted)] font-bold uppercase tracking-widest text-[10px]">No Active Orders</p>
+                    <tr id="no-orders-placeholder" style="<?= empty($orders) ? '' : 'display: none;' ?>">
+                        <td colspan="6" class="px-10 py-20 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-200">
+                                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                 </div>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
+                                <p class="text-[var(--text-muted)] font-bold uppercase tracking-widest text-[10px]">Tidak ada pesanan aktif</p>
+                            </div>
+                        </td>
+                    </tr>
 
                     <?php foreach ($orders as $o): ?>
                         <?php
@@ -132,7 +166,7 @@ function scanteen_ful_badge_styles(string $status): array
                         $st = (string) $o['status'];
                         [$bgColor, $textColor, $label] = scanteen_ful_badge_styles($ful);
                         ?>
-                        <tr class="hover:bg-[#FAF7F6] transition-colors group">
+                        <tr class="hover:bg-[#FAF7F6] transition-colors group" data-fulfillment="<?= $ful ?>">
                             <td class="px-10 py-8">
                                 <span class="text-sm font-black text-[var(--brand)]">#<?= htmlspecialchars((string) $o['order_number']) ?></span>
                                 <p class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Meja <?= htmlspecialchars((string) $o['table_number']) ?></p>
@@ -455,6 +489,54 @@ function scanteen_ful_badge_styles(string $status): array
   document.querySelectorAll('.btn-ful').forEach(btn => {
     btn.onclick = () => updateFulfillment(parseInt(btn.getAttribute('data-order')), btn.getAttribute('data-status'));
   });
+
+  // Dynamic Tab Filtering Logic
+  const filterBtnAll = document.getElementById('filter-btn-all');
+  const filterBtnNew = document.getElementById('filter-btn-new');
+  const filterBtnPrep = document.getElementById('filter-btn-preparing');
+  const orderRows = document.querySelectorAll('tbody tr[data-fulfillment]');
+
+  function applyFilter(selectedStatus, activeBtn) {
+    // 1. Reset all button classes to inactive
+    [filterBtnAll, filterBtnNew, filterBtnPrep].forEach(btn => {
+      if (btn) {
+        btn.className = btn.className.replace('bg-white shadow-sm text-[var(--brand)]', 'text-[var(--text-muted)] hover:text-[var(--text-dark)]');
+        btn.classList.remove('bg-white', 'shadow-sm', 'text-[var(--brand)]');
+        if (!btn.className.includes('text-[var(--text-muted)]')) {
+          btn.classList.add('text-[var(--text-muted)]', 'hover:text-[var(--text-dark)]');
+        }
+      }
+    });
+
+    // 2. Set active styles for the clicked button
+    if (activeBtn) {
+      activeBtn.className = activeBtn.className.replace('text-[var(--text-muted)] hover:text-[var(--text-dark)]', 'bg-white shadow-sm text-[var(--brand)]');
+      activeBtn.classList.remove('text-[var(--text-muted)]', 'hover:text-[var(--text-dark)]');
+      activeBtn.classList.add('bg-white', 'shadow-sm', 'text-[var(--brand)]');
+    }
+
+    // 3. Filter rows
+    let visibleCount = 0;
+    orderRows.forEach(row => {
+      const rowStatus = row.getAttribute('data-fulfillment');
+      if (selectedStatus === 'all' || rowStatus === selectedStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Show or hide placeholder if empty
+    const noOrdersRow = document.getElementById('no-orders-placeholder');
+    if (noOrdersRow) {
+      noOrdersRow.style.display = (visibleCount === 0) ? '' : 'none';
+    }
+  }
+
+  if (filterBtnAll) filterBtnAll.onclick = () => applyFilter('all', filterBtnAll);
+  if (filterBtnNew) filterBtnNew.onclick = () => applyFilter('new', filterBtnNew);
+  if (filterBtnPrep) filterBtnPrep.onclick = () => applyFilter('preparing', filterBtnPrep);
 })();
 </script>
 

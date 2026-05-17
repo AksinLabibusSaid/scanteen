@@ -1,6 +1,56 @@
 <?php
 // Tentukan halaman aktif berdasarkan parameter atau default
 $activePage = $activePage ?? 'dashboard';
+
+$db = \App\Core\Database::mysqli();
+$venueId = (int) \App\Staff\StaffAuth::venueId();
+$warungId = \App\Staff\StaffAuth::warungId();
+
+// Count incoming and active orders (fulfillment status = new or preparing)
+$orderWarningCount = 0;
+if ($warungId !== null) {
+    $q = $db->prepare("
+        SELECT COUNT(*) 
+        FROM orders o 
+        WHERE o.venue_id = ?
+          AND EXISTS (
+              SELECT 1 FROM order_items oi 
+              WHERE oi.order_id = o.id AND oi.warung_id = ?
+          )
+          AND COALESCE((
+              SELECT f.status 
+              FROM order_warung_fulfillment f 
+              WHERE f.order_id = o.id AND f.warung_id = ?
+              LIMIT 1
+          ), 'new') IN ('new', 'preparing')
+          AND o.status NOT IN ('cancelled', 'completed', 'pending_payment')
+    ");
+    if ($q) {
+        $q->bind_param('iii', $venueId, $warungId, $warungId);
+        $q->execute();
+        $q->bind_result($orderWarningCount);
+        $q->fetch();
+        $q->close();
+    }
+}
+
+// Count menus that are out of stock (stock_quantity = 0) or unavailable (is_available = 0)
+$menuWarningCount = 0;
+if ($warungId !== null) {
+    $q = $db->prepare("
+        SELECT COUNT(*) 
+        FROM menus 
+        WHERE warung_id = ? 
+          AND (is_available = 0 OR stock_quantity = 0)
+    ");
+    if ($q) {
+        $q->bind_param('i', $warungId);
+        $q->execute();
+        $q->bind_result($menuWarningCount);
+        $q->fetch();
+        $q->close();
+    }
+}
 ?>
 <!-- Sidebar Container -->
 <aside class="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col justify-between flex-shrink-0">
@@ -22,7 +72,7 @@ $activePage = $activePage ?? 'dashboard';
                 </p>
             </div>
         </div>
-
+ 
         <!-- Navigation Menu -->
         <nav class="flex flex-col gap-1">
             <!-- Overview -->
@@ -34,26 +84,40 @@ $activePage = $activePage ?? 'dashboard';
                 </svg>
                 <span class="font-semibold text-sm leading-5">Ringkasan</span>
             </a>
-
+ 
             <!-- Orders -->
             <a href="?page=orders"
-               class="<?= $activePage === 'orders' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 2h12l2 4H4l2-4zm14 16H4V8h16v12zm-8-9a3 3 0 0 1-3-3V7h2v1a1 1 0 0 0 2 0V7h2v1a3 3 0 0 1-3 3z"
-                          fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Pesanan</span>
+               class="<?= $activePage === 'orders' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 2h12l2 4H4l2-4zm14 16H4V8h16v12zm-8-9a3 3 0 0 1-3-3V7h2v1a1 1 0 0 0 2 0V7h2v1a3 3 0 0 1-3 3z"
+                              fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Pesanan</span>
+                </div>
+                <?php if ($orderWarningCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-[var(--brand)] text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
+                        <?= $orderWarningCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
-
+ 
             <!-- Menu Manager -->
             <a href="?page=menu"
-               class="<?= $activePage === 'menu' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                          fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>"/>
-                    <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.4"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Manajemen Menu</span>
+               class="<?= $activePage === 'menu' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                              fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>"/>
+                        <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.4"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Menu</span>
+                </div>
+                <?php if ($menuWarningCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
+                        <?= $menuWarningCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
 
             <!-- Riwayat -->

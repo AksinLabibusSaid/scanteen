@@ -1,5 +1,58 @@
 <?php
 $activePage = $activePage ?? 'dashboard';
+
+$db = \App\Core\Database::mysqli();
+$venueId = (int) \App\Staff\StaffAuth::venueId();
+
+// Count all active orders (paid, accepted, processing, ready)
+$activeOrdersCount = 0;
+$q = $db->prepare("SELECT COUNT(*) FROM orders WHERE venue_id = ? AND status IN ('paid', 'accepted', 'processing', 'ready')");
+if ($q) {
+    $q->bind_param('i', $venueId);
+    $q->execute();
+    $q->bind_result($activeOrdersCount);
+    $q->fetch();
+    $q->close();
+}
+
+// Count inactive warungs (is_active = 0)
+$inactiveWarungsCount = 0;
+$q = $db->prepare("SELECT COUNT(*) FROM warungs WHERE venue_id = ? AND is_active = 0");
+if ($q) {
+    $q->bind_param('i', $venueId);
+    $q->execute();
+    $q->bind_result($inactiveWarungsCount);
+    $q->fetch();
+    $q->close();
+}
+
+// Count menus that are out of stock (stock_quantity = 0) or unavailable (is_available = 0) across all warungs of this venue
+$warningMenusCount = 0;
+$q = $db->prepare("
+    SELECT COUNT(*) 
+    FROM menus m
+    INNER JOIN warungs w ON w.id = m.warung_id
+    WHERE w.venue_id = ? 
+      AND (m.is_available = 0 OR m.stock_quantity = 0)
+");
+if ($q) {
+    $q->bind_param('i', $venueId);
+    $q->execute();
+    $q->bind_result($warningMenusCount);
+    $q->fetch();
+    $q->close();
+}
+
+// Count inactive tables (is_active = 0)
+$inactiveTablesCount = 0;
+$q = $db->prepare("SELECT COUNT(*) FROM dining_tables WHERE venue_id = ? AND is_active = 0");
+if ($q) {
+    $q->bind_param('i', $venueId);
+    $q->execute();
+    $q->bind_result($inactiveTablesCount);
+    $q->fetch();
+    $q->close();
+}
 ?>
 <!-- Admin Sidebar -->
 <aside class="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col justify-between flex-shrink-0">
@@ -34,42 +87,70 @@ $activePage = $activePage ?? 'dashboard';
 
             <!-- Order Management -->
             <a href="?page=orders"
-               class="<?= $activePage === 'orders' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 20C5.45 20 4.97917 19.8042 4.5875 19.4125C4.19583 19.0208 4 18.55 4 18C4 17.45 4.19583 16.9792 4.5875 16.5875C4.97917 16.1958 5.45 16 6 16C6.55 16 7.02083 16.1958 7.4125 16.5875C7.80417 16.9792 8 17.45 8 18C8 18.55 7.80417 19.0208 7.4125 19.4125C7.02083 19.8042 6.55 20 6 20ZM16 20C15.45 20 14.9792 19.8042 14.5875 19.4125C14.1958 19.0208 14 18.55 14 18C14 17.45 14.1958 16.9792 14.5875 16.5875C14.9792 16.1958 15.45 16 16 16C16.55 16 17.0208 16.1958 17.4125 16.5875C17.8042 16.9792 18 17.45 18 18C18 18.55 17.8042 19.0208 17.4125 19.4125C17.0208 19.8042 16.55 20 16 20ZM5.15 4L7.55 9H14.55L17.3 4H5.15ZM4.2 2H18.95C19.3333 2 19.625 2.17083 19.825 2.5125C20.025 2.85417 20.0333 3.2 19.85 3.55L16.3 9.95C16.1167 10.2833 15.8708 10.5417 15.5625 10.725C15.2542 10.9083 14.9167 11 14.55 11H7.1L6 13H18V15H6C5.25 15 4.68333 14.6708 4.3 14.0125C3.91667 13.3542 3.9 12.7 4.25 12.05L5.6 9.6L2 2H0V0H3.25L4.2 2ZM7.55 9H14.55H7.55Z"
-                          fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Manajemen Pesanan</span>
+               class="<?= $activePage === 'orders' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M6 20C5.45 20 4.97917 19.8042 4.5875 19.4125C4.19583 19.0208 4 18.55 4 18C4 17.45 4.19583 16.9792 4.5875 16.5875C4.97917 16.1958 5.45 16 6 16C6.55 16 7.02083 16.1958 7.4125 16.5875C7.80417 16.9792 8 17.45 8 18C8 18.55 7.80417 19.0208 7.4125 19.4125C7.02083 19.8042 6.55 20 6 20ZM16 20C15.45 20 14.9792 19.8042 14.5875 19.4125C14.1958 19.0208 14 18.55 14 18C14 17.45 14.1958 16.9792 14.5875 16.5875C14.9792 16.1958 15.45 16 16 16C16.55 16 17.0208 16.1958 17.4125 16.5875C17.8042 16.9792 18 17.45 18 18C18 18.55 17.8042 19.0208 17.4125 19.4125C17.0208 19.8042 16.55 20 16 20ZM5.15 4L7.55 9H14.55L17.3 4H5.15ZM4.2 2H18.95C19.3333 2 19.625 2.17083 19.825 2.5125C20.025 2.85417 20.0333 3.2 19.85 3.55L16.3 9.95C16.1167 10.2833 15.8708 10.5417 15.5625 10.725C15.2542 10.9083 14.9167 11 14.55 11H7.1L6 13H18V15H6C5.25 15 4.68333 14.6708 4.3 14.0125C3.91667 13.3542 3.9 12.7 4.25 12.05L5.6 9.6L2 2H0V0H3.25L4.2 2ZM7.55 9H14.55H7.55Z"
+                              fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Pesanan</span>
+                </div>
+                <?php if ($activeOrdersCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-[var(--brand)] text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $activeOrdersCount ?> pesanan aktif sedang berjalan">
+                        <?= $activeOrdersCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
 
             <!-- Tenant Management -->
             <a href="?page=tenants"
-               class="<?= $activePage === 'tenants' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 20V17H3V7L0 5V2H8V5L5 7V9H15V7L12 5V2H20V5L17 7V17H19V20H12V17H14V11H6V17H8V20H1ZM14 5H18V3.5L17 3H15L14 3.5V5ZM2 5H6V3.5L5 3H3L2 3.5V5ZM6 17H10V11H6V17ZM5 17V11V17ZM15 17V11V17Z"
-                          fill="<?= $activePage === 'tenants' ? 'var(--brand)' : '#6B7280' ?>"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Manajemen Stan</span>
+               class="<?= $activePage === 'tenants' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M1 20V17H3V7L0 5V2H8V5L5 7V9H15V7L12 5V2H20V5L17 7V17H19V20H12V17H14V11H6V17H8V20H1ZM14 5H18V3.5L17 3H15L14 3.5V5ZM2 5H6V3.5L5 3H3L2 3.5V5ZM6 17H10V11H6V17ZM5 17V11V17ZM15 17V11V17Z"
+                              fill="<?= $activePage === 'tenants' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Stan</span>
+                </div>
+                <?php if ($inactiveWarungsCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $inactiveWarungsCount ?> stan dinonaktifkan">
+                        <?= $inactiveWarungsCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
 
             <!-- Menu Management -->
             <a href="?page=menus"
-               class="<?= $activePage === 'menus' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 20V13H5V3C5 2.45 5.19583 1.97917 5.5875 1.5875C5.97917 1.19583 6.45 1 7 1H13C13.55 1 14.0208 1.19583 14.4125 1.5875C14.8042 1.97917 15 2.45 15 3V13H11V20H9ZM3 20V10C2.16667 9.71667 1.5 9.225 1 8.525C0.5 7.825 0.25 7.03333 0.25 6.15V1H2.25V6H3V1H5V6H5.75V1H7.75V6.15C7.75 7.03333 7.5 7.825 7 8.525C6.5 9.225 5.83333 9.71667 5 10V20H3ZM7 13H13V3H7V13Z"
-                          fill="<?= $activePage === 'menus' ? 'var(--brand)' : '#6B7280' ?>"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Manajemen Menu</span>
+               class="<?= $activePage === 'menus' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M9 20V13H5V3C5 2.45 5.19583 1.97917 5.5875 1.5875C5.97917 1.19583 6.45 1 7 1H13C13.55 1 14.0208 1.19583 14.4125 1.5875C14.8042 1.97917 15 2.45 15 3V13H11V20H9ZM3 20V10C2.16667 9.71667 1.5 9.225 1 8.525C0.5 7.825 0.25 7.03333 0.25 6.15V1H2.25V6H3V1H5V6H5.75V1H7.75V6.15C7.75 7.03333 7.5 7.825 7 8.525C6.5 9.225 5.83333 9.71667 5 10V20H3ZM7 13H13V3H7V13Z"
+                              fill="<?= $activePage === 'menus' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Menu</span>
+                </div>
+                <?php if ($warningMenusCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $warningMenusCount ?> menu habis atau dinonaktifkan">
+                        <?= $warningMenusCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
 
             <!-- Table Management -->
             <a href="?page=tables"
-               class="<?= $activePage === 'tables' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center gap-3 px-4 py-3 rounded-r-lg transition-colors">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 20V18H3V15H1V13H3V2C3 1.45 3.19583 0.979167 3.5875 0.5875C3.97917 0.195833 4.45 0 5 0H19C19.55 0 20.0208 0.195833 20.4125 0.5875C20.8042 0.979167 21 1.45 21 2V18H23V20H1ZM5 13H9V2H5V13ZM11 13H19V2H11V13ZM5 18H19V15H5V18Z"
-                          fill="<?= $activePage === 'tables' ? 'var(--brand)' : '#6B7280' ?>"/>
-                </svg>
-                <span class="font-semibold text-sm leading-5">Manajemen Meja</span>
+               class="<?= $activePage === 'tables' ? 'active-nav' : 'text-gray-500 hover:bg-gray-50' ?> flex items-center justify-between px-4 py-3 rounded-r-lg transition-colors group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0">
+                        <path d="M1 20V18H3V15H1V13H3V2C3 1.45 3.19583 0.979167 3.5875 0.5875C3.97917 0.195833 4.45 0 5 0H19C19.55 0 20.0208 0.195833 20.4125 0.5875C20.8042 0.979167 21 1.45 21 2V18H23V20H1ZM5 13H9V2H5V13ZM11 13H19V2H11V13ZM5 18H19V15H5V18Z"
+                              fill="<?= $activePage === 'tables' ? 'var(--brand)' : '#6B7280' ?>"/>
+                    </svg>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Meja</span>
+                </div>
+                <?php if ($inactiveTablesCount > 0): ?>
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $inactiveTablesCount ?> meja makan dinonaktifkan">
+                        <?= $inactiveTablesCount ?>
+                    </div>
+                <?php endif; ?>
             </a>
 
             <!-- Reports -->
