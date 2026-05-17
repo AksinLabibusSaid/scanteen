@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Customer\OrderUi;
+use App\Repositories\VenueRepository;
+use App\Customer\CustomerSessionKeys;
 
 if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
     header('Location: ../index.php?page=status-belum-bayar');
@@ -16,6 +18,21 @@ $orderNum = htmlspecialchars((string) ($ord['order_number'] ?? '-'), ENT_QUOTES,
 $tableNum = htmlspecialchars((string) ($customerContext->tableNumber ?? '?'), ENT_QUOTES, 'UTF-8');
 $paidHref = './index.php?page=status-sudah-bayar&o=' . rawurlencode($tok);
 $simulate = defined('SCANTEEN_CUSTOMER_SIMULATE_PAYMENT') && SCANTEEN_CUSTOMER_SIMULATE_PAYMENT === true;
+
+// Check available payment methods
+$venueId = (int) ($_SESSION[CustomerSessionKeys::VENUE_ID] ?? 0);
+$venue = (new VenueRepository())->findById($venueId);
+
+$allowQris = (bool) ($venue['allow_qris'] ?? true);
+$allowCash = (bool) ($venue['allow_cash'] ?? true);
+$allowDebit = (bool) ($venue['allow_debit'] ?? false);
+
+$allowedCount = 0;
+if ($allowQris) $allowedCount++;
+if ($allowCash) $allowedCount++;
+if ($allowDebit) $allowedCount++;
+
+$canChangeMethod = $allowedCount > 1;
 ?>
 
 <!-- Scrollable Content -->
@@ -94,16 +111,31 @@ $simulate = defined('SCANTEEN_CUSTOMER_SIMULATE_PAYMENT') && SCANTEEN_CUSTOMER_S
 <!-- Bottom Action Bar -->
 <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-20 px-4 pb-4">
     <div class="flex flex-col gap-3 bg-[#FAF9F6] rounded-3xl px-5 py-4 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] border border-[#EFEEEB]">
-        <?php if ($simulate) { ?>
-        <button type="button" id="btnSimulatePay"
-            class="w-full py-4 rounded-2xl bg-[#7B0009] text-white font-bold text-base transition-all hover:bg-[#6a0000] active:scale-[0.98]">
-            Simulasi bayar (demo)
+        <?php 
+        $method = $ord['payment_method'] ?? 'kasir';
+        $bayarHref = './index.php?page=bayar-' . $method . '&o=' . rawurlencode($tok);
+        if ($simulate) { ?>
+            <button type="button" id="btnSimulatePay"
+                class="w-full py-4 rounded-2xl bg-[#7B0009] text-white font-bold text-base transition-all hover:bg-[#6a0000] active:scale-[0.98]">
+                Simulasi bayar (demo)
+            </button>
+        <?php } else { ?>
+            <button type="button" onclick="window.location.href='<?php echo htmlspecialchars($bayarHref, ENT_QUOTES, 'UTF-8'); ?>'"
+                class="w-full py-4 rounded-2xl bg-[#7B0009] text-white font-bold text-base transition-all hover:bg-[#6a0000] active:scale-[0.98]">
+                Bayar Sekarang
+            </button>
+        <?php } ?>
+        <?php if ($canChangeMethod) { ?>
+        <button type="button" onclick="window.location.href='./index.php?page=pilih-pembayaran&o=<?php echo rawurlencode($tok); ?>'"
+            class="w-full py-3 rounded-2xl border-2 border-[#7B0009] text-[#7B0009] font-bold text-base transition-all hover:bg-[#7B0009]/5 active:scale-[0.98]">
+            Ubah Metode Pembayaran
+        </button>
+        <?php } else { ?>
+        <button type="button" disabled
+            class="w-full py-3 rounded-2xl border-2 border-gray-300 text-gray-400 font-bold text-base cursor-not-allowed">
+            Ubah Metode Pembayaran
         </button>
         <?php } ?>
-        <button type="button" onclick="window.location.href='./index.php?page=home'"
-            class="w-full py-3 rounded-2xl border-2 border-[#7B0009] text-[#7B0009] font-bold text-base transition-all hover:bg-[#7B0009]/5 active:scale-[0.98]">
-            Kembali ke menu
-        </button>
     </div>
 </div>
 

@@ -22,7 +22,7 @@ if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__
     <?php if (defined('SCANTEEN_CUSTOMER_SIMULATE_PAYMENT') && SCANTEEN_CUSTOMER_SIMULATE_PAYMENT === true) { ?>
         <p class="text-xs text-gray-400 max-w-xs">
             Mode demo: tautan contoh dengan token seed database —
-            <a class="text-[#800000] font-semibold underline" href="./index.php?t=scan_demo_meja_12&amp;page=home">buka meja demo (Meja 12)</a>
+            <a class="text-[#800000] font-semibold underline" href="./index.php?t=TBL-db5d0835&amp;page=home">buka meja demo (Meja 1)</a>
         </p>
     <?php } ?>
     <p class="text-xs text-stone-400 max-w-xs">

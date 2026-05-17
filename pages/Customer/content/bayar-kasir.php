@@ -38,7 +38,7 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
   <main class="px-5 py-6 flex flex-col gap-5 pb-36">
 
     <!-- Order info card -->
-    <div class="bg-white rounded-3xl border border-[#D0D0D0] shadow-[0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
+    <div id="payment-card" class="bg-white rounded-3xl border border-[#D0D0D0] shadow-[0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
 
       <!-- Order ID + Total Bayar row -->
       <div class="flex items-start justify-between px-5 py-5 border-b border-border-divider">
@@ -130,7 +130,7 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
       <button class="customer-btn-primary flex-1 !py-4 rounded-2xl" type="button" onclick="window.location.href='<?php echo htmlspecialchars($statusHref, ENT_QUOTES, 'UTF-8'); ?>'">
         Status Pesanan
       </button>
-      <button class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" onclick="window.location.href='<?php echo htmlspecialchars($strukHref, ENT_QUOTES, 'UTF-8'); ?>'" aria-label="Download" title="Download">
+      <button id="btn-download" class="customer-btn-icon h-[56px] w-[56px] min-w-[56px] rounded-2xl" type="button" aria-label="Download" title="Download">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 16l-5-5h3V4h4v7h3l-5 5z" fill="#800000"/>
           <path d="M5 18h14v2H5v-2z" fill="#800000"/>
@@ -138,3 +138,20 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
       </button>
     </div>
   </div>
+
+<!-- html2canvas for downloading card -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+document.getElementById('btn-download').addEventListener('click', function() {
+    const card = document.getElementById('payment-card');
+    html2canvas(card, {
+        scale: 2, // Higher quality
+        useCORS: true // Allow loading cross-origin images
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Pembayaran-<?php echo $orderNum; ?>.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+});
+</script>

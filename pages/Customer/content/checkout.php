@@ -40,8 +40,8 @@ $grandTotal = round($subtotal + $serviceTax, 2);
           placeholder="Masukkan nama Anda" value="<?php echo $nameVal; ?>">
       </div>
       <div class="flex flex-col gap-[4.39px]">
-        <label class="text-[#5F5E5B] text-xs font-medium leading-[1.2]" for="customer_email">Kirim struk ke email (opsional)</label>
-        <input id="customer_email" name="customer_email" type="email"
+        <label class="text-[#5F5E5B] text-xs font-medium leading-[1.2]" for="customer_email">Email (Wajib untuk pengiriman struk)</label>
+        <input id="customer_email" name="customer_email" type="email" required
           class="w-full px-4 py-[14px] rounded-lg border border-[#E7E5E4] bg-[#faf9f6] text-[#1A1C1A] text-base outline-none focus:border-[#800000]"
           placeholder="name@email.com" value="<?php echo $emailVal; ?>">
       </div>
@@ -138,6 +138,12 @@ $grandTotal = round($subtotal + $serviceTax, 2);
     }
   }
 
+  // Override browser history restoration
+  const nameInput = document.getElementById("customer_name");
+  const emailInput = document.getElementById("customer_email");
+  if (nameInput) nameInput.value = <?php echo json_encode($nameVal); ?>;
+  if (emailInput) emailInput.value = <?php echo json_encode($emailVal); ?>;
+
   dineInBtn?.addEventListener("click", () => setDining("dine_in"));
   takeAwayBtn?.addEventListener("click", () => setDining("take_away"));
 
@@ -149,6 +155,21 @@ $grandTotal = round($subtotal + $serviceTax, 2);
       window.ScanteenUi?.showError?.({
         title: "Data belum lengkap",
         message: "Nama wajib diisi sebelum melanjutkan ke pembayaran.",
+      });
+      return;
+    }
+    if (!email) {
+      window.ScanteenUi?.showError?.({
+        title: "Data belum lengkap",
+        message: "Email wajib diisi untuk pengiriman struk.",
+      });
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      window.ScanteenUi?.showError?.({
+        title: "Format Email Salah",
+        message: "Harap masukkan alamat email yang valid (contoh: nama@email.com).",
       });
       return;
     }

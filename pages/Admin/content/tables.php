@@ -147,6 +147,10 @@ if ($filterStatus === 'available') {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
                     Lihat QR
                 </button>
+                <button class="btn-clear-table flex items-center gap-1.5 text-[9px] font-black text-[#16A34A] uppercase tracking-widest hover:text-[#15803D] transition-all" data-id="<?= $tid ?>" data-num="<?= $tableNumber ?>">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 7l-.85 11.4A2 2 0 0 1 16.15 20H7.85a2 2 0 0 1-2-1.6L5 7m5 4v6m4-6v6M1 7h22M8 7V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Clear
+                </button>
                 <button class="btn-delete-table text-gray-300 hover:text-[#BA1A1A] transition-all" data-id="<?= $tid ?>" data-num="<?= $tableNumber ?>">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                 </button>
@@ -162,24 +166,96 @@ if ($filterStatus === 'available') {
     </div>
 <?php endif; ?>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function showQR(table, dataUri) {
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR Meja ${table}</title><style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f5f5f5; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
-        .table-num { font-size: 32px; font-weight: 900; margin-bottom: 5px; color: #1f2937; }
-        .label { font-size: 14px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 30px; }
-        .qr-img { margin-bottom: 30px; width: 300px; height: 300px; }
-        .footer { font-size: 12px; color: #d1d5db; }
-        @media print { body { background: white; } .card { box-shadow: none; } }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR Meja ${table}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #556052; }
+        .card { background: white; width: 700px; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 2px solid #E05A4E; }
+        .logo-area { display: flex; align-items: center; gap: 10px; background: #F3F4F6; padding: 8px 16px; border-radius: 12px; }
+        .logo-text { font-weight: 800; color: #7B0009; letter-spacing: 1px; font-size: 14px; text-transform: uppercase; }
+        .version { color: #9CA3AF; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+        .content { display: flex; padding: 40px; gap: 40px; align-items: center; }
+        .left { flex: 1.2; text-align: left; }
+        .reserved { color: #E05A4E; font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; text-transform: uppercase; }
+        .table-num { font-size: 56px; font-weight: 800; color: #7B0009; margin-bottom: 10px; line-height: 1; }
+        .line { width: 40px; height: 3px; background: #E05A4E; opacity: 0.3; margin-bottom: 20px; }
+        .desc { color: #6B7280; font-size: 14px; line-height: 1.6; margin-bottom: 30px; }
+        .steps { display: flex; flex-direction: column; gap: 12px; }
+        .step { display: flex; align-items: center; gap: 12px; background: white; border: 1px solid #F3F4F6; padding: 12px 16px; border-radius: 12px; }
+        .step-icon { width: 32px; height: 32px; background: #FEF2F2; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .step-num { font-weight: 800; color: #7B0009; font-size: 14px; }
+        .step-text { color: #1F2937; font-size: 13px; font-weight: 700; }
+        .right { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .qr-wrapper { position: relative; padding: 15px; }
+        .qr-container { background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .qr-img { width: 180px; height: 180px; display: block; }
+        .corner { position: absolute; width: 30px; height: 30px; border-color: #7B0009; border-width: 4px; border-style: solid; }
+        .corner.tl { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 20px; }
+        .corner.tr { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 20px; }
+        .corner.bl { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 20px; }
+        .corner.br { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 20px; }
+        .badge { background: #FEE2E2; color: #7B0009; font-size: 11px; font-weight: 800; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .footer-bar { background: #7B0009; color: white; text-align: center; padding: 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        @media print { 
+            body { background: white; } 
+            .card { box-shadow: none; border: none; }
+            .header { border-bottom: 2px solid #7B0009; }
+        }
     </style></head><body onload="window.print()">
     <div class="card">
-        <div class="table-num">MEJA ${table}</div>
-        <div class="label">SmartCanteen QR Code</div>
-        <img src="${dataUri}" class="qr-img" />
-        <div class="footer">Scan untuk memesan</div>
+        <div class="header">
+            <div class="logo-area">
+                <span class="logo-text">SmartCanteen</span>
+            </div>
+            <div class="version">INTEGRATED V1.0</div>
+        </div>
+        <div class="content">
+            <div class="left">
+                <div class="reserved">RESERVED FOR</div>
+                <div class="table-num">MEJA ${table}</div>
+                <div class="line"></div>
+                <p class="desc">Pengalaman makan modern dalam satu genggaman</p>
+                
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-icon"><span class="step-num">01</span></div>
+                        <span class="step-text">Scan Kode</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon"><span class="step-num">02</span></div>
+                        <span class="step-text">Pesan & Bayar</span>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon"><span class="step-num">03</span></div>
+                        <span class="step-text">Nikmati</span>
+                    </div>
+                </div>
+            </div>
+            <div class="right">
+                <div class="qr-wrapper">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                    <div class="qr-container">
+                        <img src="${dataUri}" class="qr-img" />
+                    </div>
+                </div>
+                <div class="badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    SCAN SEKARANG
+                </div>
+            </div>
+        </div>
+        <div class="footer-bar">
+            DIGITAL SOLUTION FOR PREMIUM ORDERING
+        </div>
     </div>
     </body></html>`);
     w.document.close();
@@ -201,6 +277,47 @@ function showQR(table, dataUri) {
             if (typeof scanteenLoadPage === 'function') scanteenLoadPage(window.location.search);
             else location.reload();
         } else alert(data.error || 'Gagal');
+    });
+    
+    document.querySelectorAll('.btn-clear-table').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            Swal.fire({
+                title: 'Clear Meja ' + btn.dataset.num + '?',
+                text: 'Ini akan membatalkan pesanan yang belum dibayar dan menyelesaikan pesanan yang aktif.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#7B0009',
+                cancelButtonColor: '#675C5C',
+                confirmButtonText: 'Ya, Clear!',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const res = await fetch(apiTable, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'clear', id: parseInt(btn.dataset.id) })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: 'Meja ' + btn.dataset.num + ' berhasil diclear!',
+                            icon: 'success',
+                            confirmButtonColor: '#7B0009'
+                        }).then(() => {
+                            if (typeof scanteenLoadPage === 'function') scanteenLoadPage(window.location.search);
+                            else location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: data.error || 'Terjadi kesalahan',
+                            icon: 'error',
+                            confirmButtonColor: '#7B0009'
+                        });
+                    }
+                }
+            });
+        });
     });
 
     document.querySelectorAll('.btn-delete-table').forEach(btn => {

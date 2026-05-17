@@ -33,6 +33,16 @@ $pageTitle = match($pageKey) {
     'profile'  => 'Profil Saya',
     default    => 'Ringkasan',
 };
+
+// --- SPA / AJAX Handler ---
+if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')) {
+    if (file_exists($contentFile)) {
+        include $contentFile;
+    } else {
+        echo "Halaman tidak ditemukan.";
+    }
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -128,5 +138,80 @@ $pageTitle = match($pageKey) {
 
     </div>
 
+    <script>
+    (function() {
+        const contentArea = document.querySelector('main.content-area');
+        const sidebarLinks = document.querySelectorAll('aside nav a');
+
+        window.scanteenLoadPage = async function loadPage(url, push = true) {
+            contentArea.style.opacity = '0.5';
+            contentArea.style.transition = 'opacity 0.2s ease-in-out';
+
+            try {
+                const ajaxUrl = url + (url.includes('?') ? '&' : '?') + 'ajax=1';
+                const res = await fetch(ajaxUrl, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const html = await res.text();
+                
+                contentArea.innerHTML = html;
+                contentArea.style.opacity = '1';
+
+                if (push) {
+                    history.pushState({ url }, '', url);
+                }
+
+                // Update Sidebar Active State
+                const urlParams = new URLSearchParams(url.split('?')[1]);
+                const page = urlParams.get('page') || 'dashboard';
+                
+                sidebarLinks.forEach(link => {
+                    const linkUrl = link.getAttribute('href');
+                    const linkParams = new URLSearchParams(linkUrl.split('?')[1]);
+                    const linkPage = linkParams.get('page');
+
+                    if (linkPage === page) {
+                        link.classList.add('active-nav');
+                        link.querySelector('span').classList.remove('text-gray-500');
+                        link.querySelector('span').classList.add('text-[var(--brand)]', 'font-black');
+                    } else {
+                        link.classList.remove('active-nav');
+                        link.querySelector('span').classList.remove('text-[var(--brand)]', 'font-black');
+                        link.querySelector('span').classList.add('text-gray-500');
+                    }
+                });
+
+                // Re-run scripts if any in the fetched content
+                const scripts = contentArea.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+            } catch (err) {
+                console.error('Failed to load page:', err);
+                window.location.href = url; // Fallback
+            }
+        }
+
+        document.addEventListener('click', e => {
+            const link = e.target.closest('aside nav a, .spa-link');
+            if (link && link.getAttribute('href') && link.getAttribute('href').startsWith('?page=')) {
+                e.preventDefault();
+                scanteenLoadPage(link.getAttribute('href'));
+            }
+        });
+
+        window.addEventListener('popstate', e => {
+            if (e.state && e.state.url) {
+                scanteenLoadPage(e.state.url, false);
+            } else {
+                scanteenLoadPage('?page=dashboard', false);
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

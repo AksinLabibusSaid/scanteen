@@ -14,6 +14,18 @@ if (is_file(SCANTEEN_ROOT . '/vendor/autoload.php')) {
     require_once SCANTEEN_ROOT . '/vendor/autoload.php';
 }
 
+// Simple .env loader
+if (file_exists(SCANTEEN_ROOT . '/.env')) {
+    $lines = file(SCANTEEN_ROOT . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        $parts = explode('=', $line, 2);
+        if (count($parts) === 2) {
+            putenv(trim($parts[0]) . '=' . trim($parts[1]));
+        }
+    }
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {

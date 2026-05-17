@@ -46,4 +46,24 @@ if (!$ok) {
     scanteen_json_response(['ok' => false, 'error' => 'Status pembayaran tidak diubah (sudah dibayar atau tidak valid).'], 409);
 }
 
+// Kirim email rincian pembayaran
+try {
+    $items = $orderRepo->itemsByOrderId((int)$order['id']);
+    $mailSvc = new \App\Services\MailService();
+    $sent = $mailSvc->sendReceipt(
+        (string)$order['customer_email'], 
+        (string)$order['customer_name'], 
+        $order, 
+        $items
+    );
+    if (!$sent) {
+        throw new \Exception('MailService returned false. Periksa kredensial atau log.');
+    }
+} catch (\Throwable $e) {
+    scanteen_json_response([
+        'ok' => false, 
+        'error' => 'Gagal mengirim email: ' . $e->getMessage()
+    ], 500);
+}
+
 scanteen_json_response(['ok' => true]);

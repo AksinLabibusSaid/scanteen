@@ -168,7 +168,7 @@ function scanteen_ful_badge_styles(string $status): array
                         ?>
                         <tr class="hover:bg-[#FAF7F6] transition-colors group" data-fulfillment="<?= $ful ?>">
                             <td class="px-10 py-8">
-                                <span class="text-sm font-black text-[var(--brand)]">#<?= htmlspecialchars((string) $o['order_number']) ?></span>
+                                <span class="text-sm font-black text-[var(--brand)]">#<?= htmlspecialchars((string) ($o['display_order_number'] ?? $o['order_number'])) ?></span>
                                 <p class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Meja <?= htmlspecialchars((string) $o['table_number']) ?></p>
                             </td>
                             <td class="px-6 py-8">
@@ -482,8 +482,12 @@ function scanteen_ful_badge_styles(string $status): array
       body: JSON.stringify({ action: 'fulfillment', order_id: orderId, status: status }),
     });
     const data = await res.json();
-    if (data.ok) location.reload();
-    else alert(data.error || 'Gagal');
+    if (data.ok) {
+        if (typeof scanteenLoadPage === 'function') scanteenLoadPage(window.location.href, false);
+        else location.reload();
+    } else {
+        alert(data.error || 'Gagal');
+    }
   }
 
   document.querySelectorAll('.btn-ful').forEach(btn => {

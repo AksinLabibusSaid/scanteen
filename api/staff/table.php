@@ -45,9 +45,54 @@ if ($action === 'toggle') {
     exit;
 }
 
+if ($action === 'clear') {
+    $id = (int) ($data['id'] ?? 0);
+    if ($id <= 0) {
+        echo json_encode(['ok' => false, 'error' => 'ID tidak valid']);
+        exit;
+    }
+    
+    try {
+        $mysqli = \App\Core\Database::mysqli();
+        
+        // Ensure column exists (MySQL safe way)
+        $res = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_cleared_at'");
+        if ($res->num_rows === 0) {
+            $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_cleared_at DATETIME NULL");
+        }
+        
+        // 1. Batalkan pesanan yang belum dibayar
+        $sql1 = "UPDATE orders SET status = 'cancelled' WHERE dining_table_id = ? AND status = 'pending_payment'";
+        $stmt1 = $mysqli->prepare($sql1);
+        $stmt1->bind_param('i', $id);
+        $stmt1->execute();
+        $stmt1->close();
+        
+        // 2. Selesaikan pesanan yang aktif (paid, accepted, processing, ready)
+        $sql2 = "UPDATE orders SET status = 'completed' WHERE dining_table_id = ? AND status IN ('paid', 'accepted', 'processing', 'ready')";
+        $stmt2 = $mysqli->prepare($sql2);
+        $stmt2->bind_param('i', $id);
+        $stmt2->execute();
+        $stmt2->close();
+        
+        // 3. Update last_cleared_at
+        $now = date('Y-m-d H:i:s');
+        $sql3 = "UPDATE dining_tables SET last_cleared_at = ? WHERE id = ?";
+        $stmt3 = $mysqli->prepare($sql3);
+        $stmt3->bind_param('si', $now, $id);
+        $stmt3->execute();
+        $stmt3->close();
+        
+        echo json_encode(['ok' => true]);
+    } catch (\Throwable $e) {
+        echo json_encode(['ok' => false, 'error' => 'Gagal membersihkan meja: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
 if ($action === 'delete') {
     $id = (int) ($data['id'] ?? 0);
-    $ok = $repo->delete($id, $venueId);
+    $ok = $repo->softDelete($id, $venueId);
     echo json_encode(['ok' => $ok]);
     exit;
 }

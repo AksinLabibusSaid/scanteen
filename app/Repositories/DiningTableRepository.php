@@ -74,7 +74,7 @@ final class DiningTableRepository
         $sql = <<<SQL
             SELECT id, venue_id, table_number, barcode_token, is_active, created_at
             FROM dining_tables
-            WHERE venue_id = ?
+            WHERE venue_id = ? AND is_active = 1
             ORDER BY CAST(table_number AS UNSIGNED) ASC, table_number ASC, id ASC
             SQL;
 

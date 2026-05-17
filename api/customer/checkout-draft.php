@@ -19,6 +19,14 @@ if ($name === '') {
     scanteen_json_response(['ok' => false, 'error' => 'Nama wajib diisi.'], 422);
 }
 
+if ($email === '') {
+    scanteen_json_response(['ok' => false, 'error' => 'Email wajib diisi untuk pengiriman struk.'], 422);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    scanteen_json_response(['ok' => false, 'error' => 'Format email tidak valid.'], 422);
+}
+
 (new \App\Services\CheckoutDraftService())->save([
     'name' => $name,
     'email' => $email,

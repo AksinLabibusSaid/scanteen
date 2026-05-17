@@ -125,7 +125,7 @@ function scanteen_kasir_status_label(string $s): string
                     $active = $activeTab === $key;
                 ?>
                 <button type="button" 
-                        onclick="window.location.href='?page=orders&status=<?= $key === 'all' ? '' : $key ?>&q=<?= urlencode($filters['q']) ?>'"
+                        onclick="typeof scanteenLoadPage === 'function' ? scanteenLoadPage('?page=orders&status=<?= $key === 'all' ? '' : $key ?>&q=<?= urlencode($filters['q']) ?>') : window.location.href='?page=orders&status=<?= $key === 'all' ? '' : $key ?>&q=<?= urlencode($filters['q']) ?>'"
                         class="flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all <?= $active ? 'bg-white text-[var(--brand)] shadow-sm' : 'text-gray-400 hover:text-gray-600' ?>">
                     <?= $label ?>
                 </button>

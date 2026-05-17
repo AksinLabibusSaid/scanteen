@@ -110,7 +110,7 @@ function scanteen_kasir_history_status_label(string $s): string
                     $url = '?' . http_build_query($queryParams);
                 ?>
                 <a href="<?= $url ?>" 
-                   class="px-5 py-2 rounded-lg text-sm font-bold transition-all <?= $active ? 'bg-[#7B0009] text-white shadow-md' : 'text-gray-400 hover:text-gray-600' ?>">
+                   class="spa-link px-5 py-2 rounded-lg text-sm font-bold transition-all <?= $active ? 'bg-[#7B0009] text-white shadow-md' : 'text-gray-400 hover:text-gray-600' ?>">
                     <?= $label ?>
                 </a>
                 <?php endforeach; ?>

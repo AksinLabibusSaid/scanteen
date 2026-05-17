@@ -28,6 +28,17 @@ final class OrderWriteRepository
         $affected = $stmt->affected_rows;
         $stmt->close();
 
+        if ($affected === 1) {
+            $sel = Database::mysqli()->prepare("SELECT id FROM orders WHERE public_token = ?");
+            $sel->bind_param('s', $token);
+            $sel->execute();
+            $row = $sel->get_result()->fetch_assoc();
+            $sel->close();
+            if ($row) {
+                (new \App\Services\EmailService())->sendReceipt((int) $row['id']);
+            }
+        }
+
         return $affected === 1;
     }
 
@@ -64,6 +75,28 @@ final class OrderWriteRepository
             SET status = 'paid'
             WHERE id = ?
               AND status = 'pending_payment'
+            SQL;
+
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $orderId);
+        $stmt->execute();
+        $n = $stmt->affected_rows;
+        $stmt->close();
+
+        if ($n === 1) {
+            (new \App\Services\EmailService())->sendReceipt($orderId);
+        }
+
+        return $n === 1;
+    }
+
+    public function markProcessingIfEligible(int $orderId): bool
+    {
+        $sql = <<<SQL
+            UPDATE orders
+            SET status = 'processing'
+            WHERE id = ?
+              AND status IN ('paid','accepted')
             SQL;
 
         $stmt = Database::mysqli()->prepare($sql);
