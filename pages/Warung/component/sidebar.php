@@ -93,10 +93,10 @@ if ($warungId !== null) {
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6zm0 2h12l2 4H4l2-4zm14 16H4V8h16v12zm-8-9a3 3 0 0 1-3-3V7h2v1a1 1 0 0 0 2 0V7h2v1a3 3 0 0 1-3 3z"
                               fill="<?= $activePage === 'orders' ? 'var(--brand)' : '#6B7280' ?>"/>
                     </svg>
-                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Pesanan</span>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Pesanan</span>
                 </div>
                 <?php if ($orderWarningCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-[var(--brand)] text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-[var(--brand)] text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
                         <?= $orderWarningCount ?>
                     </div>
                 <?php endif; ?>
@@ -111,10 +111,10 @@ if ($warungId !== null) {
                               fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>"/>
                         <circle cx="18" cy="18" r="3" fill="<?= $activePage === 'menu' ? 'var(--brand)' : '#6B7280' ?>" opacity="0.4"/>
                     </svg>
-                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis">Manajemen Menu</span>
+                    <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Manajemen Menu</span>
                 </div>
                 <?php if ($menuWarningCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
+                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;">
                         <?= $menuWarningCount ?>
                     </div>
                 <?php endif; ?>
