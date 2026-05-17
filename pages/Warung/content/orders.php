@@ -9,7 +9,7 @@ use App\Support\PublicUrl;
 $venueId = (int) StaffAuth::venueId();
 $warungId = StaffAuth::warungId();
 $orders = [];
-$stats = ['incoming' => 0, 'preparing' => 0, 'completed_today' => 0];
+$stats = ['incoming' => 0, 'preparing' => 0, 'ready' => 0, 'completed_today' => 0];
 
 if ($warungId !== null) {
     $repo = new OrderListRepository();
@@ -37,7 +37,7 @@ function scanteen_ful_badge_styles(string $status): array
         'new' => ['bg-orange-50', 'text-orange-600', 'INCOMING'],
         'preparing' => ['bg-blue-50', 'text-blue-600', 'PREPARING'],
         'ready' => ['bg-indigo-50', 'text-indigo-600', 'READY'],
-        'picked_up', 'completed' => ['bg-emerald-50', 'text-emerald-600', 'PICKED UP'],
+        'picked_up', 'completed' => ['bg-emerald-50', 'text-emerald-600', 'SELESAI'],
         default => ['bg-gray-50', 'text-gray-600', strtoupper($status)],
     };
 }
@@ -126,8 +126,16 @@ function scanteen_ful_badge_styles(string $status): array
                     <button id="filter-btn-preparing" class="px-5 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)] flex items-center gap-2 transition-all">
                         Proses
                         <?php if ($stats['preparing'] > 0): ?>
-                            <span class="flex items-center justify-center min-w-[16px] h-4 bg-orange-500 text-white text-[9px] px-1 rounded-full font-bold shadow-sm" style="color: #ffffff !important;">
+                            <span class="flex items-center justify-center min-w-[16px] h-4 bg-blue-500 text-white text-[9px] px-1 rounded-full font-bold shadow-sm" style="color: #ffffff !important;">
                                 <?= $stats['preparing'] ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
+                    <button id="filter-btn-ready" class="px-5 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:text-[var(--text-dark)] flex items-center gap-2 transition-all">
+                        Siap
+                        <?php if ($stats['ready'] > 0): ?>
+                            <span class="flex items-center justify-center min-w-[16px] h-4 bg-indigo-500 text-white text-[9px] px-1 rounded-full font-bold shadow-sm" style="color: #ffffff !important;">
+                                <?= $stats['ready'] ?>
                             </span>
                         <?php endif; ?>
                     </button>
@@ -197,15 +205,18 @@ function scanteen_ful_badge_styles(string $status): array
                                     <button class="px-5 py-2 rounded-xl bg-white border border-gray-100 text-[var(--text-dark)] text-[10px] font-black uppercase tracking-widest hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all btn-view-detail"
                                             data-id="<?= $oid ?>">Lihat Detail</button>
 
-                                    <?php if ($st !== 'pending_payment' && $ful !== 'ready'): ?>
+                                    <?php if ($st !== 'pending_payment' && $ful !== 'completed'): ?>
                                         <?php if ($ful === 'new'): ?>
                                             <button class="px-6 py-2.5 bg-[var(--brand)] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/10 hover:opacity-90 transition-all btn-ful"
                                                     data-order="<?= $oid ?>" data-status="preparing">Mulai Proses</button>
                                         <?php elseif ($ful === 'preparing'): ?>
-                                            <button class="px-6 py-2.5 bg-[var(--success-green)] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all btn-ful"
+                                            <button class="px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-900/10 hover:opacity-90 transition-all btn-ful"
                                                     data-order="<?= $oid ?>" data-status="ready">Pesanan Siap</button>
+                                        <?php elseif ($ful === 'ready'): ?>
+                                            <button class="px-6 py-2.5 bg-[var(--success-green)] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all btn-ful"
+                                                    data-order="<?= $oid ?>" data-status="completed">Selesai</button>
                                         <?php endif; ?>
-                                    <?php elseif ($ful === 'ready'): ?>
+                                    <?php elseif ($ful === 'completed'): ?>
                                         <div class="flex items-center justify-end gap-2 text-[var(--success-green)]">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Selesai</span>
@@ -395,11 +406,12 @@ function scanteen_ful_badge_styles(string $status): array
       document.getElementById('detail-table-number').textContent = String(o.table_number).padStart(2, '0');
       
       const badge = document.getElementById('detail-fulfillment-badge');
-      badge.textContent = fulStatus.toUpperCase();
+      badge.textContent = fulStatus === 'completed' ? 'SELESAI' : fulStatus.toUpperCase();
       badge.className = 'px-4 py-1.5 text-[9px] font-black rounded-full uppercase tracking-widest border ' + 
                        (fulStatus === 'new' ? 'bg-orange-50 text-orange-600 border-orange-100' : 
                         fulStatus === 'preparing' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                        'bg-indigo-50 text-indigo-600 border-indigo-100');
+                        fulStatus === 'ready' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                        'bg-emerald-50 text-emerald-600 border-emerald-100');
 
       // Timeline Logic
       document.getElementById('time-received').textContent = formatTime(o.created_at);
@@ -418,13 +430,25 @@ function scanteen_ful_badge_styles(string $status): array
 
       const dotPrep = document.getElementById('dot-preparing');
       const labelPrep = document.getElementById('label-preparing');
-      if (fulStatus === 'preparing' || fulStatus === 'ready') {
-          dotPrep.classList.replace('bg-gray-100', 'bg-[var(--brand)]');
-          labelPrep.classList.replace('text-[var(--text-muted)]', 'text-[var(--brand)]');
+      if (fulStatus === 'preparing') {
+          dotPrep.className = 'w-6 h-6 rounded-full bg-blue-500 ring-8 ring-white shadow-sm transition-colors shrink-0';
+          labelPrep.className = 'text-[10px] font-black uppercase tracking-tight leading-tight text-blue-600';
+          labelPrep.textContent = 'Started Preparing';
+          document.getElementById('time-preparing').textContent = formatTime(data.fulfillment_updated_at);
+      } else if (fulStatus === 'ready') {
+          dotPrep.className = 'w-6 h-6 rounded-full bg-indigo-500 ring-8 ring-white shadow-sm transition-colors shrink-0';
+          labelPrep.className = 'text-[10px] font-black uppercase tracking-tight leading-tight text-indigo-600';
+          labelPrep.textContent = 'Order Ready';
+          document.getElementById('time-preparing').textContent = formatTime(data.fulfillment_updated_at);
+      } else if (fulStatus === 'completed') {
+          dotPrep.className = 'w-6 h-6 rounded-full bg-[var(--success-green)] ring-8 ring-white shadow-sm transition-colors shrink-0';
+          labelPrep.className = 'text-[10px] font-black uppercase tracking-tight leading-tight text-[var(--success-green)]';
+          labelPrep.textContent = 'Completed';
           document.getElementById('time-preparing').textContent = formatTime(data.fulfillment_updated_at);
       } else {
-          dotPrep.classList.replace('bg-[var(--brand)]', 'bg-gray-100');
-          labelPrep.classList.replace('text-[var(--brand)]', 'text-[var(--text-muted)]');
+          dotPrep.className = 'w-6 h-6 rounded-full bg-gray-100 ring-8 ring-white shadow-sm transition-colors shrink-0';
+          labelPrep.className = 'text-[10px] font-black uppercase tracking-tight leading-tight text-[var(--text-muted)]';
+          labelPrep.textContent = 'Started Preparing';
           document.getElementById('time-preparing').textContent = '--:--';
       }
 
@@ -456,16 +480,20 @@ function scanteen_ful_badge_styles(string $status): array
       
       btnPrint.onclick = () => window.open('?page=struk&id=' + o.id, '_blank');
 
-      if (o.status !== 'pending_payment' && fulStatus !== 'ready') {
+      if (o.status !== 'pending_payment' && fulStatus !== 'completed') {
           btnAction.style.display = 'block';
           if (fulStatus === 'new') {
               btnAction.textContent = 'Mulai Proses';
-              btnAction.classList.replace('bg-emerald-500', 'bg-[var(--brand)]');
+              btnAction.className = 'flex-1 py-5 bg-[var(--brand)] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-red-900/20 hover:scale-[1.02] active:scale-95 transition-all';
               btnAction.onclick = () => updateFulfillment(o.id, 'preparing');
-          } else {
-              btnAction.textContent = 'Mark as Ready';
-              btnAction.classList.replace('bg-[var(--brand)]', 'bg-[#00C853]');
+          } else if (fulStatus === 'preparing') {
+              btnAction.textContent = 'Pesanan Siap';
+              btnAction.className = 'flex-1 py-5 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-900/20 hover:scale-[1.02] active:scale-95 transition-all';
               btnAction.onclick = () => updateFulfillment(o.id, 'ready');
+          } else if (fulStatus === 'ready') {
+              btnAction.textContent = 'Selesai';
+              btnAction.className = 'flex-1 py-5 bg-[#00C853] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-emerald-900/20 hover:scale-[1.02] active:scale-95 transition-all';
+              btnAction.onclick = () => updateFulfillment(o.id, 'completed');
           }
       } else {
           btnAction.style.display = 'none';
@@ -498,11 +526,12 @@ function scanteen_ful_badge_styles(string $status): array
   const filterBtnAll = document.getElementById('filter-btn-all');
   const filterBtnNew = document.getElementById('filter-btn-new');
   const filterBtnPrep = document.getElementById('filter-btn-preparing');
+  const filterBtnReady = document.getElementById('filter-btn-ready');
   const orderRows = document.querySelectorAll('tbody tr[data-fulfillment]');
 
   function applyFilter(selectedStatus, activeBtn) {
     // 1. Reset all button classes to inactive
-    [filterBtnAll, filterBtnNew, filterBtnPrep].forEach(btn => {
+    [filterBtnAll, filterBtnNew, filterBtnPrep, filterBtnReady].forEach(btn => {
       if (btn) {
         btn.className = btn.className.replace('bg-white shadow-sm text-[var(--brand)]', 'text-[var(--text-muted)] hover:text-[var(--text-dark)]');
         btn.classList.remove('bg-white', 'shadow-sm', 'text-[var(--brand)]');
@@ -541,6 +570,7 @@ function scanteen_ful_badge_styles(string $status): array
   if (filterBtnAll) filterBtnAll.onclick = () => applyFilter('all', filterBtnAll);
   if (filterBtnNew) filterBtnNew.onclick = () => applyFilter('new', filterBtnNew);
   if (filterBtnPrep) filterBtnPrep.onclick = () => applyFilter('preparing', filterBtnPrep);
+  if (filterBtnReady) filterBtnReady.onclick = () => applyFilter('ready', filterBtnReady);
 })();
 </script>
 

@@ -129,6 +129,24 @@ final class OrderWriteRepository
         return $n === 1;
     }
 
+    public function markCompletedIfEligible(int $orderId): bool
+    {
+        $sql = <<<SQL
+            UPDATE orders
+            SET status = 'completed'
+            WHERE id = ?
+              AND status IN ('paid','accepted','processing','ready')
+            SQL;
+
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $orderId);
+        $stmt->execute();
+        $n = $stmt->affected_rows;
+        $stmt->close();
+
+        return $n === 1;
+    }
+
     public function cancelPendingPaymentOrder(int $orderId, int $venueId): bool
     {
         $sql = <<<SQL

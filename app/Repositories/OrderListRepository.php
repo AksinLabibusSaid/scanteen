@@ -109,7 +109,7 @@ final class OrderListRepository
               AND o.status NOT IN ('cancelled','completed','pending_payment')
               AND NOT EXISTS (
                 SELECT 1 FROM order_warung_fulfillment f2
-                WHERE f2.order_id = o.id AND f2.warung_id = ? AND f2.status = 'ready'
+                WHERE f2.order_id = o.id AND f2.warung_id = ? AND f2.status = 'completed'
               )
             ORDER BY o.id DESC
             LIMIT {$limit}
@@ -195,7 +195,7 @@ final class OrderListRepository
     ): array {
         $limit = max(1, min(300, $limit));
 
-        $where = ['o.venue_id = ?', "(o.status = 'completed' OR f.status = 'ready')"];
+        $where = ['o.venue_id = ?', "(o.status = 'completed' OR f.status = 'completed')"];
         $types = 'ii';
         $params = [$warungId, $venueId]; // warungId is used in the JOIN clause below
 
@@ -431,7 +431,7 @@ final class OrderListRepository
     }
 
     /**
-     * @return array{incoming: int, preparing: int, completed_today: int}
+     * @return array{incoming: int, preparing: int, ready: int, completed_today: int}
      */
     public function getWarungFulfillmentStats(int $venueId, int $warungId): array
     {
@@ -440,7 +440,8 @@ final class OrderListRepository
             SELECT
                 SUM(CASE WHEN f.status = 'new' AND o.status IN ('paid','accepted','processing') THEN 1 ELSE 0 END) as incoming,
                 SUM(CASE WHEN f.status = 'preparing' THEN 1 ELSE 0 END) as preparing,
-                SUM(CASE WHEN (f.status = 'ready' OR o.status = 'completed') AND DATE(o.created_at) = ? THEN 1 ELSE 0 END) as completed_today
+                SUM(CASE WHEN f.status = 'ready' THEN 1 ELSE 0 END) as ready,
+                SUM(CASE WHEN (f.status = 'completed' OR o.status = 'completed') AND DATE(o.created_at) = ? THEN 1 ELSE 0 END) as completed_today
             FROM orders o
             INNER JOIN order_warung_fulfillment f ON f.order_id = o.id AND f.warung_id = ?
             WHERE o.venue_id = ?
@@ -455,6 +456,7 @@ final class OrderListRepository
         return [
             'incoming' => (int) ($res['incoming'] ?? 0),
             'preparing' => (int) ($res['preparing'] ?? 0),
+            'ready' => (int) ($res['ready'] ?? 0),
             'completed_today' => (int) ($res['completed_today'] ?? 0),
         ];
     }

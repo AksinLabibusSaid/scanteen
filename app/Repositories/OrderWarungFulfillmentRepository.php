@@ -23,7 +23,7 @@ final class OrderWarungFulfillmentRepository
 
     public function updateStatus(int $orderId, int $warungId, string $status): bool
     {
-        if (!in_array($status, ['new', 'preparing', 'ready'], true)) {
+        if (!in_array($status, ['new', 'preparing', 'ready', 'completed'], true)) {
             return false;
         }
 
@@ -43,9 +43,14 @@ final class OrderWarungFulfillmentRepository
 
     public function allReadyForOrder(int $orderId): bool
     {
+        return $this->allReadyOrCompletedForOrder($orderId);
+    }
+
+    public function allReadyOrCompletedForOrder(int $orderId): bool
+    {
         $sql = <<<SQL
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) AS ready_cnt
+                   SUM(CASE WHEN status IN ('ready', 'completed') THEN 1 ELSE 0 END) AS ready_cnt
             FROM order_warung_fulfillment
             WHERE order_id = ?
             SQL;
@@ -64,5 +69,30 @@ final class OrderWarungFulfillmentRepository
         $ready = (int) $row['ready_cnt'];
 
         return $total > 0 && $total === $ready;
+    }
+
+    public function allCompletedForOrder(int $orderId): bool
+    {
+        $sql = <<<SQL
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_cnt
+            FROM order_warung_fulfillment
+            WHERE order_id = ?
+            SQL;
+
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $orderId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($row === null) {
+            return false;
+        }
+
+        $total = (int) $row['total'];
+        $completed = (int) $row['completed_cnt'];
+
+        return $total > 0 && $total === $completed;
     }
 }
