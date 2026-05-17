@@ -31,7 +31,6 @@ final class MenuRepository
             INNER JOIN warungs w ON w.id = m.warung_id AND w.is_active = 1
             INNER JOIN menu_categories c ON c.id = m.category_id
             WHERE w.venue_id = ?
-              AND m.is_available = 1
             ORDER BY w.sort_order ASC, m.id ASC
             SQL;
 
@@ -68,6 +67,7 @@ final class MenuRepository
                 m.id,
                 m.name,
                 m.price,
+                m.stock_quantity,
                 m.is_available,
                 w.id AS warung_id,
                 w.name AS warung_name,
@@ -170,9 +170,9 @@ final class MenuRepository
 
     public function setAvailability(int $menuId, int $isAvailable): bool
     {
-        $sql = 'UPDATE menus SET is_available = ? WHERE id = ? AND (? = 0 OR stock_quantity > 0)';
+        $sql = 'UPDATE menus SET is_available = ? WHERE id = ?';
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('iiii', $isAvailable, $menuId, $isAvailable);
+        $stmt->bind_param('ii', $isAvailable, $menuId);
         $stmt->execute();
         $ok = $stmt->affected_rows >= 0;
         $stmt->close();
@@ -262,9 +262,9 @@ final class MenuRepository
     }
     public function updateStock(int $menuId, int $warungId, int $newStock): bool
     {
-        $sql = 'UPDATE menus SET stock_quantity = ?, is_available = (CASE WHEN ? > 0 THEN 1 ELSE 0 END) WHERE id = ? AND warung_id = ?';
+        $sql = 'UPDATE menus SET stock_quantity = ? WHERE id = ? AND warung_id = ?';
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('iiii', $newStock, $newStock, $menuId, $warungId);
+        $stmt->bind_param('iii', $newStock, $menuId, $warungId);
         $stmt->execute();
         $ok = $stmt->affected_rows >= 0;
         $stmt->close();

@@ -13,8 +13,6 @@ $api = PublicUrl::basePath() . '/api/staff/menu.php';
 
 if ($warungId !== null) {
     $menuRepo = new MenuRepository();
-    // Self-healing: ensure DB is consistent (Stock 0 must be is_available 0)
-    $menuRepo->syncAvailabilityWithStock($warungId);
     $menus = $menuRepo->listAdminByVenue($venueId, $warungId);
 }
 
@@ -196,16 +194,15 @@ $filteredMenus = array_filter($menus, function($m) use ($currentTab, $search) {
                                 </td>
                                 <td class="px-6 py-6">
                                     <div class="flex items-center gap-3">
-                                        <label class="relative inline-flex items-center <?= $stock === 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer' ?>">
+                                        <label class="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" class="sr-only peer btn-toggle-switch" 
                                                    data-id="<?= (int) $m['id'] ?>" 
                                                    data-stock="<?= $stock ?>"
-                                                   <?= (int) $m['is_available'] === 1 && $stock > 0 ? 'checked' : '' ?>
-                                                   <?= $stock === 0 ? 'disabled' : '' ?>>
+                                                   <?= (int) $m['is_available'] === 1 ? 'checked' : '' ?>>
                                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7B0009]"></div>
                                         </label>
-                                        <span class="text-[10px] font-black uppercase tracking-widest <?= (int) $m['is_available'] === 1 && $stock > 0 ? 'text-emerald-600' : 'text-red-500' ?>">
-                                            <?= (int) $m['is_available'] === 1 && $stock > 0 ? 'Aktif' : 'Nonaktif' ?>
+                                        <span class="text-[10px] font-black uppercase tracking-widest <?= (int) $m['is_available'] === 1 ? 'text-emerald-600' : 'text-red-500' ?>">
+                                            <?= (int) $m['is_available'] === 1 ? 'Aktif' : 'Nonaktif' ?>
                                         </span>
                                     </div>
                                 </td>
