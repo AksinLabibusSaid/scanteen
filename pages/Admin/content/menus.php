@@ -34,6 +34,7 @@ foreach ($allForCount as $m) {
 $apiBase = PublicUrl::basePath();
 ?>
 
+<div id="menusContentWrapper">
 <!-- Page Header -->
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
     <div>
@@ -226,7 +227,18 @@ $apiBase = PublicUrl::basePath();
         </div>
         <form id="formMenu" class="px-8 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
             <input type="hidden" id="menuId" name="menu_id" value="">
-            <p id="menuMsg" class="hidden text-xs font-bold text-red-600"></p>
+            <div id="menuErrorAlert" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p id="menuErrorText" class="text-xs font-bold text-red-700"></p>
+                    </div>
+                </div>
+            </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -281,6 +293,28 @@ $apiBase = PublicUrl::basePath();
     </div>
 </div>
 
+<!-- ===================== MODAL KONFIRMASI HAPUS ===================== -->
+<div id="modalDelete" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" id="modalDeleteOverlay"></div>
+    <div class="relative bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="px-8 py-6 text-center">
+            <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 class="poppins text-lg font-black text-[var(--text-dark)] mb-2">Hapus Menu?</h2>
+            <p class="text-sm text-gray-500 mb-6">Apakah Anda yakin ingin menghapus menu <span id="deleteMenuName" class="font-bold text-[var(--text-dark)]"></span>? Tindakan ini tidak dapat dibatalkan.</p>
+            
+            <div class="flex gap-3">
+                <button id="btnCancelDelete" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Batal</button>
+                <button id="btnConfirmDelete" class="flex-1 py-3 rounded-xl bg-red-500 text-white text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-all">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -294,7 +328,8 @@ $apiBase = PublicUrl::basePath();
     const modal     = document.getElementById('modalMenu');
     const modalTitle = document.getElementById('modalMenuTitle');
     const menuIdInput = document.getElementById('menuId');
-    const menuMsg   = document.getElementById('menuMsg');
+    const menuErrorAlert = document.getElementById('menuErrorAlert');
+    const menuErrorText = document.getElementById('menuErrorText');
 
     // SPA Logic for Warung Filter
     const filterWarungSelect = document.getElementById('filterWarungSelect');
@@ -316,7 +351,7 @@ $apiBase = PublicUrl::basePath();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         modalTitle.textContent = isEdit ? 'Edit Menu' : 'Tambah Menu Baru';
-        menuMsg.classList.add('hidden');
+        menuErrorAlert.classList.add('hidden');
     }
     function closeModal() {
         modal.classList.add('hidden');
@@ -330,19 +365,107 @@ $apiBase = PublicUrl::basePath();
     document.getElementById('btnCancelModal').addEventListener('click', closeModal);
     document.getElementById('modalMenuOverlay').addEventListener('click', closeModal);
 
-    document.querySelectorAll('.btn-menu-edit').forEach(btn => {
-        btn.addEventListener('click', () => {
-            menuIdInput.value = btn.dataset.id;
-            document.getElementById('menuWarungId').value    = btn.dataset.warung_id;
-            document.getElementById('menuCategoryId').value  = btn.dataset.category_id;
-            document.getElementById('menuName').value        = btn.dataset.name;
-            document.getElementById('menuPrice').value       = btn.dataset.price;
-            document.getElementById('menuDescription').value = btn.dataset.description;
-            document.getElementById('menuImageUrl').value    = btn.dataset.image_url;
-            document.getElementById('menuIsAvailable').checked = btn.dataset.is_available === '1';
-            openModal(true);
+    // Event Delegation for Edit, Delete, Toggle
+    if (!document._scanteenMenusListenerAttached) {
+        document.addEventListener('click', async (e) => {
+            // Edit Button
+            const editBtn = e.target.closest('.btn-menu-edit');
+            if (editBtn) {
+                document.getElementById('menuId').value = editBtn.dataset.id;
+                document.getElementById('menuWarungId').value    = editBtn.dataset.warung_id;
+                document.getElementById('menuCategoryId').value  = editBtn.dataset.category_id;
+                document.getElementById('menuName').value        = editBtn.dataset.name;
+                document.getElementById('menuPrice').value       = editBtn.dataset.price;
+                document.getElementById('menuDescription').value = editBtn.dataset.description;
+                document.getElementById('menuImageUrl').value    = editBtn.dataset.image_url;
+                document.getElementById('menuIsAvailable').checked = editBtn.dataset.is_available === '1';
+                
+                // openModal logic
+                const modal = document.getElementById('modalMenu');
+                const modalTitle = document.getElementById('modalMenuTitle');
+                const menuErrorAlert = document.getElementById('menuErrorAlert');
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                modalTitle.textContent = 'Edit Menu';
+                menuErrorAlert.classList.add('hidden');
+                return;
+            }
+
+            // Delete Button
+            const deleteBtn = e.target.closest('.btn-menu-delete');
+            if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
+                const name = deleteBtn.dataset.name;
+                
+                const modalDelete = document.getElementById('modalDelete');
+                const deleteMenuName = document.getElementById('deleteMenuName');
+                
+                modalDelete.dataset.targetId = id;
+                deleteMenuName.textContent = name;
+                modalDelete.classList.remove('hidden');
+                modalDelete.classList.add('flex');
+                return;
+            }
+
+            // Toggle Button
+            const toggleBtn = e.target.closest('.btn-menu-toggle');
+            if (toggleBtn) {
+                const menuId = parseInt(toggleBtn.dataset.id, 10);
+                const next = parseInt(toggleBtn.dataset.next, 10);
+                
+                const res  = await fetch(apiMenu, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'availability', menu_id: menuId, is_available: next })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    if (typeof window.scanteenLoadPage === 'function') {
+                        window.scanteenLoadPage(window.location.search);
+                    } else {
+                        location.reload();
+                    }
+                }
+                return;
+            }
+
+            // Cancel Delete Button
+            const cancelDeleteBtn = e.target.closest('#btnCancelDelete') || e.target.closest('#modalDeleteOverlay');
+            if (cancelDeleteBtn) {
+                const modalDelete = document.getElementById('modalDelete');
+                modalDelete.classList.add('hidden');
+                modalDelete.classList.remove('flex');
+                return;
+            }
+
+            // Confirm Delete Button
+            const confirmDeleteBtn = e.target.closest('#btnConfirmDelete');
+            if (confirmDeleteBtn) {
+                const modalDelete = document.getElementById('modalDelete');
+                const deleteTargetId = modalDelete.dataset.targetId;
+                if (!deleteTargetId) return;
+                
+                const res  = await fetch(apiDelete, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ menu_id: parseInt(deleteTargetId, 10) })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    modalDelete.classList.add('hidden');
+                    modalDelete.classList.remove('flex');
+                    if (typeof window.scanteenLoadPage === 'function') {
+                        window.scanteenLoadPage(window.location.search);
+                    } else {
+                        location.reload();
+                    }
+                }
+                return;
+            }
         });
-    });
+        document._scanteenMenusListenerAttached = true;
+    }
 
     document.getElementById('btnSaveMenu').addEventListener('click', async () => {
         const id = menuIdInput.value;
@@ -361,8 +484,8 @@ $apiBase = PublicUrl::basePath();
         const res  = await fetch(apiMenu, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (!data.ok) {
-            menuMsg.textContent = data.error || 'Gagal menyimpan';
-            menuMsg.classList.remove('hidden');
+            menuErrorText.textContent = data.error || 'Gagal menyimpan';
+            menuErrorAlert.classList.remove('hidden');
             return;
         }
         if (typeof window.scanteenLoadPage === 'function') {
@@ -373,41 +496,8 @@ $apiBase = PublicUrl::basePath();
         }
     });
 
-    document.querySelectorAll('.btn-menu-toggle').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const res  = await fetch(apiMenu, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ action: 'availability', menu_id: parseInt(btn.dataset.id, 10), is_available: parseInt(btn.dataset.next, 10) })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                if (typeof window.scanteenLoadPage === 'function') {
-                    window.scanteenLoadPage(window.location.search);
-                } else {
-                    location.reload();
-                }
-            }
-        });
-    });
+    // Event listeners removed - handled by delegation
 
-    document.querySelectorAll('.btn-menu-delete').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            if (!confirm('Hapus menu "' + btn.dataset.name + '"?')) return;
-            const res  = await fetch(apiDelete, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ menu_id: parseInt(btn.dataset.id, 10) })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                if (typeof window.scanteenLoadPage === 'function') {
-                    window.scanteenLoadPage(window.location.search);
-                } else {
-                    location.reload();
-                }
-            }
-        });
-    });
+    // Event listeners removed - handled by delegation
 })();
 </script>

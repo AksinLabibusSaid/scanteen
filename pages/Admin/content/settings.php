@@ -38,78 +38,10 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
 </div>
 
 <form id="formSettings" class="space-y-8 pb-20">
-    <!-- Row 1: Payment Gateway & Expiry -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Payment Gateway Config -->
+    <!-- Row 1: Operating Hours & Payment Methods -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Operating Hours (Span 2) -->
         <div class="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-gray-50">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="w-10 h-10 rounded-lg bg-[#FDE8E4] flex items-center justify-center text-[var(--brand)]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
-                </div>
-                <h3 class="poppins text-base font-black text-[var(--text-dark)]">Payment Gateway Config (Midtrans)</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Environment Mode</label>
-                    <div class="flex items-center gap-3 mt-3">
-                        <span class="text-[10px] font-bold text-gray-400">Sandbox</span>
-                        <div class="w-10 h-5 rounded-full bg-gray-200 relative cursor-pointer transition-colors toggle-switch" data-target="isProduction">
-                            <input type="checkbox" name="is_production" id="isProduction" class="hidden" <?= (int)($venue['is_production'] ?? 0) === 1 ? 'checked' : '' ?>>
-                            <div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all knob"></div>
-                        </div>
-                        <span class="text-[10px] font-black text-[var(--brand)]">Production</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Midtrans Client Key</label>
-                    <input type="text" name="midtrans_client_key" value="<?= htmlspecialchars((string)($venue['midtrans_client_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="w-full px-5 py-3.5 bg-[#FAF7F6] border-none rounded-2xl text-xs font-bold text-[var(--brand)] outline-none">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Midtrans Server Key</label>
-                    <input type="password" name="midtrans_server_key" value="<?= htmlspecialchars((string)($venue['midtrans_server_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="w-full px-5 py-3.5 bg-[#FAF7F6] border-none rounded-2xl text-xs font-bold text-[var(--brand)] outline-none tracking-widest">
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Expiry -->
-        <div class="bg-[var(--brand)] p-8 rounded-[32px] shadow-lg text-white">
-            <div class="flex items-center justify-between mb-10">
-                <div class="flex items-center gap-3">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <h3 class="poppins text-sm font-black uppercase tracking-wider">Payment Expiry</h3>
-                </div>
-            </div>
-
-            <div class="space-y-6">
-                <div>
-                    <p class="text-[9px] font-black text-white/50 uppercase tracking-widest mb-4">Payment Deadline (Minutes)</p>
-                    <div class="flex items-center gap-4">
-                        <input type="number" name="payment_expiry_minutes" value="<?= (int)($venue['payment_expiry_minutes'] ?? 15) ?>" class="w-24 px-4 py-3 bg-white/10 border-none rounded-xl text-lg font-black text-white text-center outline-none">
-                        <span class="text-[10px] font-bold text-white/50">MENIT</span>
-                    </div>
-                </div>
-                
-                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 mt-10">
-                    <p class="text-[10px] font-medium italic text-white/60 leading-relaxed text-center">
-                        Pesanan akan otomatis dibatalkan jika tidak dibayar dalam waktu tersebut.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row 2: Operating Hours & Payment Methods -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Operating Hours -->
-        <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-50">
             <div class="flex items-center justify-between mb-10">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-[#FDE8E4] flex items-center justify-center text-[var(--brand)]">
@@ -163,7 +95,7 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
             </div>
         </div>
 
-        <!-- Payment Methods -->
+        <!-- Payment Methods (Span 1) -->
         <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-50">
             <div class="flex items-center gap-3 mb-10">
                 <div class="w-10 h-10 rounded-xl bg-[#FDE8E4] flex items-center justify-center text-[var(--brand)]">
@@ -188,37 +120,61 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
                         <div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all knob"></div>
                     </div>
                 </div>
-                <div class="flex items-center justify-between p-4 bg-[#FAF7F6] rounded-2xl">
-                    <span class="text-xs font-black text-[var(--text-dark)]">Debit Card</span>
-                    <div class="w-10 h-5 rounded-full bg-gray-200 relative cursor-pointer transition-colors toggle-switch" data-target="allowDebit">
-                        <input type="checkbox" name="allow_debit" id="allowDebit" class="hidden" <?= ($venue['allow_debit'] ?? 0) ? 'checked' : '' ?>>
-                        <div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all knob"></div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- Maintenance Mode -->
-    <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.5">
-                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                </svg>
-                <h3 class="poppins text-sm font-black text-[var(--text-dark)] uppercase">Maintenance Mode</h3>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-[9px] font-black text-[var(--brand)] uppercase tracking-widest">Enable Mode</span>
-                <div class="w-10 h-5 rounded-full bg-gray-200 relative cursor-pointer transition-colors toggle-switch" data-target="maintenanceMode">
-                    <input type="checkbox" name="maintenance_mode" id="maintenanceMode" class="hidden" <?= (int)($venue['maintenance_mode'] ?? 0) === 1 ? 'checked' : '' ?>>
-                    <div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all knob"></div>
+    <!-- Row 2: Maintenance Mode & Payment Expiry -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Maintenance Mode (Span 2) -->
+        <div class="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2.5">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                    <h3 class="poppins text-sm font-black text-[var(--text-dark)] uppercase">Maintenance Mode</h3>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[9px] font-black text-[var(--brand)] uppercase tracking-widest">Enable Mode</span>
+                    <div class="w-10 h-5 rounded-full bg-gray-200 relative cursor-pointer transition-colors toggle-switch" data-target="maintenanceMode">
+                        <input type="checkbox" name="maintenance_mode" id="maintenanceMode" class="hidden" <?= (int)($venue['maintenance_mode'] ?? 0) === 1 ? 'checked' : '' ?>>
+                        <div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all knob"></div>
+                    </div>
                 </div>
             </div>
+            <div class="space-y-3">
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Custom Message for Customers</p>
+                <textarea name="maintenance_message" rows="3" placeholder="Mohon maaf, SmartCanteen sedang dalam pemeliharaan sistem rutin." class="w-full px-5 py-4 bg-[#FAF7F6] border-none rounded-2xl text-[11px] font-medium text-[var(--text-muted)] outline-none resize-none leading-relaxed"><?= htmlspecialchars((string)($venue['maintenance_message'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+            </div>
         </div>
-        <div class="space-y-3">
-            <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Custom Message for Customers</p>
-            <textarea name="maintenance_message" rows="3" placeholder="Mohon maaf, SmartCanteen sedang dalam pemeliharaan sistem rutin." class="w-full px-5 py-4 bg-[#FAF7F6] border-none rounded-2xl text-[11px] font-medium text-[var(--text-muted)] outline-none resize-none leading-relaxed"><?= htmlspecialchars((string)($venue['maintenance_message'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+
+        <!-- Payment Expiry (Span 1) -->
+        <div class="bg-[var(--brand)] p-8 rounded-[32px] shadow-lg text-white">
+            <div class="flex items-center justify-between mb-10">
+                <div class="flex items-center gap-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <h3 class="poppins text-sm font-black uppercase tracking-wider">Payment Expiry</h3>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <p class="text-[9px] font-black text-white/50 uppercase tracking-widest mb-4">Payment Deadline (Minutes)</p>
+                    <div class="flex items-center gap-4">
+                        <input type="number" name="payment_expiry_minutes" value="<?= (int)($venue['payment_expiry_minutes'] ?? 15) ?>" class="w-24 px-4 py-3 bg-white/10 border-none rounded-xl text-lg font-black text-white text-center outline-none">
+                        <span class="text-[10px] font-bold text-white/50">MENIT</span>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 mt-10">
+                    <p class="text-[10px] font-medium italic text-white/60 leading-relaxed text-center">
+                        Pesanan akan otomatis dibatalkan jika tidak dibayar dalam waktu tersebut.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </form>
@@ -292,15 +248,12 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
         const formData = new FormData(form);
         const body = {
             action: 'update',
-            is_production: document.getElementById('isProduction').checked,
-            midtrans_client_key: formData.get('midtrans_client_key'),
-            midtrans_server_key: formData.get('midtrans_server_key'),
             payment_expiry_minutes: parseInt(formData.get('payment_expiry_minutes')),
             maintenance_mode: document.getElementById('maintenanceMode').checked,
             maintenance_message: formData.get('maintenance_message'),
             allow_qris: document.getElementById('allowQris').checked,
             allow_cash: document.getElementById('allowCash').checked,
-            allow_debit: document.getElementById('allowDebit').checked,
+            allow_debit: false,
             operating_hours: {
                 close_on_holidays: document.getElementById('closeOnHolidays').checked,
                 mon_fri: { open: formData.get('oh_mon_fri_open'), close: formData.get('oh_mon_fri_close'), active: true },

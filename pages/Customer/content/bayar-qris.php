@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 use App\Customer\OrderUi;
 use App\Support\Money;
+use App\Repositories\OrderRepository;
+use App\Services\MidtransSnapService;
 
 if (basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)) {
     header('Location: ../index.php?page=bayar-qris');
@@ -16,6 +18,31 @@ $totalFmt = Money::formatIdr((float) ($ord['total'] ?? 0));
 $orderNum = htmlspecialchars((string) ($ord['order_number'] ?? ''), ENT_QUOTES, 'UTF-8');
 $statusHref = './index.php?page=status-belum-bayar&o=' . rawurlencode($tok);
 $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
+
+$snapToken = '';
+$midtransError = null;
+
+if ($ord !== null) {
+    $orderRepo = new OrderRepository();
+    $items = $orderRepo->itemsByOrderId((int) $ord['id']);
+    
+    $itemLinesForDisplay = array_map(function($item) {
+        return [
+            'id' => (string) $item['menu_id'],
+            'price' => (float) $item['unit_price'],
+            'qty' => (int) $item['quantity'],
+            'name' => (string) $item['menu_name_snapshot'],
+        ];
+    }, $items);
+    
+    $midtransService = new MidtransSnapService();
+    try {
+        $snapData = $midtransService->createSnapToken($ord, $itemLinesForDisplay);
+        $snapToken = $snapData['token'];
+    } catch (\Exception $e) {
+        $midtransError = $e->getMessage();
+    }
+}
 ?>
 
 <!-- Scrollable content -->
@@ -53,15 +80,21 @@ $strukHref = './index.php?page=struk&o=' . rawurlencode($tok);
             </div>
         </div>
 
-        <!-- QR Code -->
+        <!-- QR Code / Midtrans Button -->
         <div class="flex justify-center">
-            <div class="p-2 rounded-2xl border-2 border-[#7B0009] bg-white">
-                <img
-                    src="https://api.builder.io/api/v1/image/assets/TEMP/a52bb22c7583c816363d4ce1630f1ce1e49ff9f3?width=512"
-                    alt="QRIS QR Code"
-                    class="w-64 h-64 rounded-lg object-cover"
-                />
-            </div>
+            <?php if ($snapToken !== ''): ?>
+                <button id="btnPayMidtrans" class="w-full max-w-xs py-4 rounded-xl bg-[#7B0009] text-white text-base font-bold shadow-md hover:bg-[#6A0008] transition-colors">
+                    Bayar Sekarang (Midtrans)
+                </button>
+            <?php elseif ($midtransError !== null): ?>
+                <div class="text-red-500 text-sm text-center">
+                    Gagal memuat pembayaran: <?= htmlspecialchars($midtransError, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            <?php else: ?>
+                <div class="text-gray-500 text-sm text-center">
+                    Menyiapkan pembayaran...
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Scan instruction -->
@@ -164,6 +197,24 @@ document.getElementById('btn-download').addEventListener('click', function() {
         link.href = canvas.toDataURL('image/png');
         link.click();
     });
+});
+</script>
+
+<!-- Midtrans Snap -->
+<script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="<?= htmlspecialchars(getenv('MIDTRANS_CLIENT_KEY') ?: '') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPay = document.getElementById('btnPayMidtrans');
+    if (btnPay) {
+        btnPay.addEventListener('click', function() {
+            snap.pay('<?= $snapToken ?>', {
+                onSuccess: function(result){ window.location.href = '<?= $statusHref ?>'; },
+                onPending: function(result){ window.location.href = '<?= $statusHref ?>'; },
+                onError: function(result){ alert('Pembayaran gagal!'); },
+                onClose: function(){ alert('Anda menutup popup pembayaran.'); }
+            });
+        });
+    }
 });
 </script>
 

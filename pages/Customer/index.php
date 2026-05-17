@@ -166,7 +166,7 @@ $customerApiRoot = '../../api/customer';
 
 $bodyClass = '';
 $outerClass = 'min-h-screen flex justify-center bg-[#FAF9F6]';
-$innerClass = 'w-full max-w-[430px] relative';
+$innerClass = 'w-full max-w-[430px] md:max-w-[768px] lg:max-w-[1024px] relative bg-white';
 ?>
 <!DOCTYPE html>
 <html lang="id">

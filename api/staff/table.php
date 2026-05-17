@@ -92,7 +92,7 @@ if ($action === 'clear') {
 
 if ($action === 'delete') {
     $id = (int) ($data['id'] ?? 0);
-    $ok = $repo->delete($id, $venueId);
+    $ok = $repo->softDelete($id, $venueId);
     echo json_encode(['ok' => $ok]);
     exit;
 }

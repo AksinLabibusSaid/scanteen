@@ -49,12 +49,18 @@ $backHref = $backLinks[$pageKeyLocal] ?? './index.php?page=home';
     </header>
 <?php } elseif ($title !== null) { ?>
     <header class="sticky top-0 z-30 flex items-center justify-between px-4 py-4 bg-white border-b border-gray-200">
-        <a href="<?php echo htmlspecialchars($backHref, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 18L9 12L15 6" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="font-plus-jakarta text-maroon font-extrabold tracking-[0.18em] text-sm"><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></span>
-        </a>
+        <?php if ($pageKeyLocal === 'bayar-qris') { ?>
+            <div class="inline-flex items-center gap-3">
+                <span class="font-plus-jakarta text-maroon font-extrabold tracking-[0.18em] text-sm"><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+        <?php } else { ?>
+            <a href="<?php echo htmlspecialchars($backHref, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-3">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M15 18L9 12L15 6" stroke="#800000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-plus-jakarta text-maroon font-extrabold tracking-[0.18em] text-sm"><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></span>
+            </a>
+        <?php } ?>
 
         <img src="https://api.builder.io/api/v1/image/assets/TEMP/7c63d6d2f2848f53c163ee7f930ee5fd70edd4d6?width=80" alt="Logo" class="w-10 h-[46px] object-contain">
     </header>

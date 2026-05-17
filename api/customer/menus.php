@@ -42,6 +42,7 @@ scanteen_json_response([
             'warung_id' => (int) $r['warung_id'],
             'category' => (string) $r['category_name'],
             'category_slug' => (string) $r['category_slug'],
+            'is_available' => (int) $r['is_available'],
         ];
     }, $rows),
     'warung_tabs' => array_merge(['Semua'], array_values(array_unique(array_values($warungs)))),
