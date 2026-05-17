@@ -50,7 +50,7 @@ final class WarungApiController extends StaffApiController
         $venueId = (int) StaffAuth::venueId();
         $role = StaffAuth::role();
 
-        if ($orderId < 1 || !in_array($status, ['new', 'preparing', 'ready'], true)) {
+        if ($orderId < 1 || !in_array($status, ['new', 'preparing', 'ready', 'completed'], true)) {
             $this->json(['ok' => false, 'error' => 'Data tidak valid'], 422);
         }
 
@@ -88,8 +88,12 @@ final class WarungApiController extends StaffApiController
             (new OrderWriteRepository())->markProcessingIfEligible($orderId);
         }
 
-        if ($status === 'ready' && $ful->allReadyForOrder($orderId)) {
+        if ($status === 'ready' && $ful->allReadyOrCompletedForOrder($orderId)) {
             (new OrderWriteRepository())->markReadyIfEligible($orderId);
+        }
+
+        if ($status === 'completed' && $ful->allCompletedForOrder($orderId)) {
+            (new OrderWriteRepository())->markCompletedIfEligible($orderId);
         }
 
         $this->json(['ok' => true]);

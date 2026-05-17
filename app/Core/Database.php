@@ -25,6 +25,14 @@ final class Database
 
         $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
         $mysqli->set_charset('utf8mb4');
+        
+        // Self-healing migration to support 'completed' status in order_warung_fulfillment
+        try {
+            $mysqli->query("ALTER TABLE order_warung_fulfillment MODIFY COLUMN status ENUM('new','preparing','ready','completed') NOT NULL DEFAULT 'new'");
+        } catch (\Throwable $e) {
+            // Ignore if column is already updated or other transient errors
+        }
+
         self::$connection = $mysqli;
     }
 
