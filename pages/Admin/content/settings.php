@@ -70,25 +70,20 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
                         <input type="time" name="oh_mon_fri_close" value="<?= $oh['mon_fri']['close'] ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
                     </div>
                 </div>
-                <!-- Saturday -->
+                <!-- Sat - Sun -->
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-black text-[var(--text-dark)]">Saturday</span>
-                    <div class="flex items-center gap-3">
-                        <input type="time" name="oh_sat_open" value="<?= $oh['sat']['open'] ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
-                        <span class="text-[9px] font-bold text-gray-400 uppercase">to</span>
-                        <input type="time" name="oh_sat_close" value="<?= $oh['sat']['close'] ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
-                    </div>
-                </div>
-                <!-- Sunday -->
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-black text-gray-300">Sunday</span>
+                    <span class="text-xs font-black text-[var(--text-dark)]">Sat - Sun</span>
                     <div class="flex items-center gap-4">
-                        <span id="sunStatus" class="text-[9px] font-black <?= $oh['sun']['active'] ? 'text-[#16A34A]' : 'text-gray-300' ?> uppercase tracking-widest"><?= $oh['sun']['active'] ? 'OPEN' : 'CLOSED' ?></span>
-                        <button type="button" id="btnToggleSun" class="text-[9px] font-black text-[var(--brand)] underline uppercase tracking-widest"><?= $oh['sun']['active'] ? 'Disable' : 'Enable' ?></button>
-                        <input type="hidden" name="oh_sun_active" id="ohSunActive" value="<?= $oh['sun']['active'] ? '1' : '0' ?>">
-                        <div id="sunTimes" class="<?= $oh['sun']['active'] ? '' : 'hidden' ?> flex items-center gap-3">
-                            <input type="time" name="oh_sun_open" value="<?= $oh['sun']['open'] ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
-                            <input type="time" name="oh_sun_close" value="<?= $oh['sun']['close'] ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
+                        <?php 
+                        $satSunActive = ($oh['sat']['active'] ?? false) || ($oh['sun']['active'] ?? false);
+                        ?>
+                        <span id="satSunStatus" class="text-[9px] font-black <?= $satSunActive ? 'text-[#16A34A]' : 'text-gray-300' ?> uppercase tracking-widest"><?= $satSunActive ? 'OPEN' : 'CLOSED' ?></span>
+                        <button type="button" id="btnToggleSatSun" class="text-[9px] font-black text-[var(--brand)] underline uppercase tracking-widest"><?= $satSunActive ? 'Disable' : 'Enable' ?></button>
+                        <input type="hidden" name="oh_sat_sun_active" id="ohSatSunActive" value="<?= $satSunActive ? '1' : '0' ?>">
+                        <div id="satSunTimes" class="<?= $satSunActive ? '' : 'hidden' ?> flex items-center gap-3">
+                            <input type="time" name="oh_sat_sun_open" value="<?= $oh['sat']['open'] ?? '09:00' ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
+                            <span class="text-[9px] font-bold text-gray-400 uppercase">to</span>
+                            <input type="time" name="oh_sat_sun_close" value="<?= $oh['sat']['close'] ?? '15:00' ?>" class="px-3 py-1.5 bg-[#FDE8E4] border-none rounded-lg text-xs font-bold text-[var(--brand)] outline-none">
                         </div>
                     </div>
                 </div>
@@ -195,26 +190,26 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
     const btnSave = document.getElementById('btnSaveSettings');
     const saveStatus = document.getElementById('saveStatus');
 
-    // Sunday toggle logic
-    const btnToggleSun = document.getElementById('btnToggleSun');
-    const sunStatus = document.getElementById('sunStatus');
-    const sunTimes = document.getElementById('sunTimes');
-    const ohSunActive = document.getElementById('ohSunActive');
+    // Sat - Sun toggle logic
+    const btnToggleSatSun = document.getElementById('btnToggleSatSun');
+    const satSunStatus = document.getElementById('satSunStatus');
+    const satSunTimes = document.getElementById('satSunTimes');
+    const ohSatSunActive = document.getElementById('ohSatSunActive');
 
-    btnToggleSun.addEventListener('click', () => {
-        const isActive = ohSunActive.value === '1';
+    btnToggleSatSun.addEventListener('click', () => {
+        const isActive = ohSatSunActive.value === '1';
         if (isActive) {
-            ohSunActive.value = '0';
-            sunStatus.textContent = 'CLOSED';
-            sunStatus.className = 'text-[9px] font-black text-gray-300 uppercase tracking-widest';
-            btnToggleSun.textContent = 'Enable';
-            sunTimes.classList.add('hidden');
+            ohSatSunActive.value = '0';
+            satSunStatus.textContent = 'CLOSED';
+            satSunStatus.className = 'text-[9px] font-black text-gray-300 uppercase tracking-widest';
+            btnToggleSatSun.textContent = 'Enable';
+            satSunTimes.classList.add('hidden');
         } else {
-            ohSunActive.value = '1';
-            sunStatus.textContent = 'OPEN';
-            sunStatus.className = 'text-[9px] font-black text-[#16A34A] uppercase tracking-widest';
-            btnToggleSun.textContent = 'Disable';
-            sunTimes.classList.remove('hidden');
+            ohSatSunActive.value = '1';
+            satSunStatus.textContent = 'OPEN';
+            satSunStatus.className = 'text-[9px] font-black text-[#16A34A] uppercase tracking-widest';
+            btnToggleSatSun.textContent = 'Disable';
+            satSunTimes.classList.remove('hidden');
         }
     });
 
@@ -257,8 +252,16 @@ $apiSettings = PublicUrl::basePath() . '/api/staff/settings.php';
             operating_hours: {
                 close_on_holidays: document.getElementById('closeOnHolidays').checked,
                 mon_fri: { open: formData.get('oh_mon_fri_open'), close: formData.get('oh_mon_fri_close'), active: true },
-                sat: { open: formData.get('oh_sat_open'), close: formData.get('oh_sat_close'), active: true },
-                sun: { open: formData.get('oh_sun_open'), close: formData.get('oh_sun_close'), active: document.getElementById('ohSunActive').value === '1' }
+                sat: { 
+                    open: formData.get('oh_sat_sun_open'), 
+                    close: formData.get('oh_sat_sun_close'), 
+                    active: document.getElementById('ohSatSunActive').value === '1' 
+                },
+                sun: { 
+                    open: formData.get('oh_sat_sun_open'), 
+                    close: formData.get('oh_sat_sun_close'), 
+                    active: document.getElementById('ohSatSunActive').value === '1' 
+                }
             }
         };
 

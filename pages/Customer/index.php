@@ -52,6 +52,12 @@ if ($customerHasAccess && $customerContext !== null) {
         
         // Update session to match the new clear timestamp
         $_SESSION['customer_last_seen_cleared_at'] = $lastCleared;
+        
+        // Clear active order token so customer returns to home page
+        unset($_SESSION[CustomerSessionKeys::LAST_ORDER_TOKEN]);
+        
+        header('Location: ./index.php?page=home');
+        exit;
     }
 
     $cartSvc = new CartService();
@@ -60,6 +66,25 @@ if ($customerHasAccess && $customerContext !== null) {
     $checkoutDraft = (new CheckoutDraftService())->get();
 
     $activeOrdersForBanner = $orderRepo->findAllTrackableForTable($customerContext->diningTableId);
+
+    // Track order statuses for auto-refresh
+    $currentStatusStr = '';
+    foreach ($activeOrdersForBanner as $o) {
+        $currentStatusStr .= $o['id'] . ':' . $o['status'] . ',';
+    }
+    $_SESSION['customer_last_seen_order_statuses'] = $currentStatusStr;
+
+    // Track venue settings for auto-refresh
+    $venueIdForTrack = $_SESSION[CustomerSessionKeys::VENUE_ID] ?? 0;
+    if ($venueIdForTrack > 0) {
+        $stmtv = $mysqli->prepare("SELECT maintenance_mode, operating_hours, allow_qris, allow_cash, allow_debit FROM venues WHERE id = ?");
+        $stmtv->bind_param('i', $venueIdForTrack);
+        $stmtv->execute();
+        $v = $stmtv->get_result()->fetch_assoc();
+        $stmtv->close();
+        
+        $_SESSION['customer_last_seen_venue_state'] = md5(json_encode($v));
+    }
 
     $customerOrder = null;
     $tok = '';
@@ -221,12 +246,12 @@ $innerClass = 'w-full max-w-[430px] md:max-w-[768px] lg:max-w-[1024px] relative 
 
     <script src="/scanteen/assets/js/customer.js"></script>
     <script>
-        // Auto-refresh when admin clears the table
+        // Auto-refresh when state changes (table cleared, order status, or venue settings)
         setInterval(async () => {
             try {
-                const res = await fetch('/scanteen/api/customer/check-clear.php');
+                const res = await fetch('/scanteen/api/customer/check-status.php');
                 const data = await res.json();
-                if (data.cleared) {
+                if (data.cleared || data.order_changed || data.venue_changed) {
                     window.location.reload();
                 }
             } catch(e) {}

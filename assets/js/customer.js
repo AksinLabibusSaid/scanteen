@@ -163,7 +163,7 @@ function renderMenuItems() {
 
   filtered.forEach((item) => {
     const card = document.createElement("div");
-    card.className = "rounded-[20px] bg-white shadow-[3px_3px_15px_0_rgba(0,0,0,0.15)] overflow-hidden";
+    card.className = "rounded-[20px] bg-white shadow-[3px_3px_15px_0_rgba(0,0,0,0.15)] overflow-hidden cursor-pointer";
 
     const isDisabled = (item.is_available === 0) || ((item.stock ?? 0) <= 0);
     card.innerHTML = `
@@ -181,46 +181,157 @@ function renderMenuItems() {
           <p class="text-sm font-semibold text-maroon font-plus-jakarta mt-1">${formatRupiah(item.price)}</p>
           <button type="button" class="mt-2 w-[132px] h-[26px] rounded-[20px] text-[10px] font-semibold font-plus-jakarta transition-all menu-add-btn ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
               style="background-color: ${isDisabled ? '#9CA3AF' : '#8B2424'}; color: white; border: 1px solid transparent;"
-              data-menu-id="${item.id}"
               ${isDisabled ? 'disabled' : ''}>
               ${isDisabled ? 'Habis' : 'Tambah'}
           </button>
       </div>
     `;
 
-    grid.appendChild(card);
-  });
+    const addBtn = card.querySelector(".menu-add-btn");
+    if (!isDisabled && addBtn) {
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent opening modal
+        handleAddClick(addBtn, item.id, 1, ""); // Add directly
+      });
+    }
 
-  grid.querySelectorAll(".menu-add-btn").forEach((btn) => {
-    btn.addEventListener("click", () => handleAddClick(btn, parseInt(btn.getAttribute("data-menu-id") || "0", 10)));
+    if (!isDisabled) {
+      card.addEventListener("click", () => {
+        showMenuDetailModal(item);
+      });
+    }
+
+    grid.appendChild(card);
   });
 }
 
-async function handleAddClick(button, itemId) {
-  if (!apiRoot || !itemId) return;
-  flashButton(button);
+function showMenuDetailModal(item) {
+  const existing = document.querySelector(".menu-detail-backdrop");
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "menu-detail-backdrop fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4";
+  backdrop.setAttribute("role", "dialog");
+  backdrop.setAttribute("aria-modal", "true");
+
+  const modal = document.createElement("div");
+  modal.className = "w-full max-w-[360px] bg-white rounded-3xl overflow-hidden shadow-2xl relative";
+
+  modal.innerHTML = `
+    <!-- Top Part: Image -->
+    <div class="relative h-[240px]">
+      <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+      <h2 class="absolute bottom-4 left-4 text-white text-2xl font-bold font-plus-jakarta">${item.name}</h2>
+      <button id="closeModalBtn" class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Bottom Part: Details -->
+    <div class="p-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-sm text-gray-500 font-medium">${item.warung}</p>
+          <p class="text-xl font-bold text-maroon font-plus-jakarta mt-1">${formatRupiah(item.price)}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-gray-500 font-medium">Tersedia</p>
+          <p class="text-sm font-bold text-gray-700">Stok : ${item.stock ?? 0}</p>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-100 pt-4 mb-4">
+        <label class="text-sm font-semibold text-gray-700 mb-2 block">Catatan Tambahan</label>
+        <textarea id="modalNotes" placeholder="Tambah catatan..." class="w-full h-24 p-4 bg-[#FAF7F6] border-none rounded-2xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-maroon/30 resize-none"></textarea>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <!-- Quantity Selector -->
+        <div class="flex items-center bg-[#FDE8E4] rounded-full px-3 py-2">
+          <button id="modalDecQty" class="w-8 h-8 flex items-center justify-center text-maroon font-bold text-xl">-</button>
+          <span id="modalQty" class="mx-4 font-bold text-gray-700">1</span>
+          <button id="modalIncQty" class="w-8 h-8 flex items-center justify-center text-maroon font-bold text-xl">+</button>
+        </div>
+
+        <!-- Add Button -->
+        <button id="modalAddBtn" class="flex-1 h-12 bg-maroon text-white rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Tambah
+        </button>
+      </div>
+    </div>
+  `;
+
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const closeBtn = modal.querySelector("#closeModalBtn");
+  const decBtn = modal.querySelector("#modalDecQty");
+  const incBtn = modal.querySelector("#modalIncQty");
+  const qtySpan = modal.querySelector("#modalQty");
+  const addBtn = modal.querySelector("#modalAddBtn");
+  const notesArea = modal.querySelector("#modalNotes");
+
+  let qty = 1;
+  const maxStock = item.stock ?? 0;
+
+  closeBtn.addEventListener("click", () => backdrop.remove());
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+  decBtn.addEventListener("click", () => {
+    if (qty > 1) {
+      qty--;
+      qtySpan.textContent = qty;
+    }
+  });
+
+  incBtn.addEventListener("click", () => {
+    if (qty < maxStock) {
+      qty++;
+      qtySpan.textContent = qty;
+    } else {
+      alert("Stok tidak mencukupi");
+    }
+  });
+
+  addBtn.addEventListener("click", async () => {
+    const success = await handleAddClick(null, item.id, qty, notesArea.value);
+    if (success) {
+      backdrop.remove();
+    }
+  });
+}
+
+async function handleAddClick(button, itemId, qty = 1, note = "") {
+  if (!apiRoot || !itemId) return false;
+  if (button) flashButton(button);
   try {
     const r = await fetchJson(apiRoot + "/cart.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "add", menu_id: itemId, qty: 1, note: "" }),
+      body: JSON.stringify({ action: "add", menu_id: itemId, qty: qty, note: note }),
     });
     if (!r.ok) {
       alert(r.error || "Gagal menambah ke keranjang");
-      return;
+      return false;
     }
     await refreshCart();
     updateCart();
+    return true;
   } catch (e) {
     console.error(e);
     alert("Gagal menambah ke keranjang");
+    return false;
+  } finally {
+    if (button) {
+      setTimeout(() => {
+        button.style.backgroundColor = "#8B2424";
+        button.style.color = "white";
+        button.style.border = "1px solid transparent";
+      }, 180);
+    }
   }
-
-  setTimeout(() => {
-    button.style.backgroundColor = "#8B2424";
-    button.style.color = "white";
-    button.style.border = "1px solid transparent";
-  }, 180);
 }
 
 function flashButton(button) {
