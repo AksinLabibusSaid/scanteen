@@ -159,7 +159,7 @@ final class OrderCreationService
                 SQL;
             $itemStmt = $db->prepare($itemSql);
             
-            $stockSql = "UPDATE menus SET stock_quantity = stock_quantity - ? WHERE id = ?";
+            $stockSql = "UPDATE menus SET stock_quantity = GREATEST(0, stock_quantity - ?), is_available = CASE WHEN stock_quantity - ? <= 0 THEN 0 ELSE is_available END WHERE id = ?";
             $stockStmt = $db->prepare($stockSql);
             
             $warungIds = [];
@@ -174,19 +174,19 @@ final class OrderCreationService
                 $ls = $pl['line_subtotal'];
                 
                 $itemStmt->bind_param(
-                    'iiisdisd',
-                    $orderId,
-                    $mid,
-                    $wid,
-                    $name,
-                    $unit,
-                    $qty,
-                    $note,
-                    $ls
+                     'iiisdisd',
+                     $orderId,
+                     $mid,
+                     $wid,
+                     $name,
+                     $unit,
+                     $qty,
+                     $note,
+                     $ls
                 );
                 $itemStmt->execute();
                 
-                $stockStmt->bind_param('ii', $qty, $mid);
+                $stockStmt->bind_param('iii', $qty, $qty, $mid);
                 $stockStmt->execute();
             }
             $itemStmt->close();

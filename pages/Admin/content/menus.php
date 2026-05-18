@@ -434,6 +434,8 @@ $apiBase = PublicUrl::basePath();
                     } else {
                         location.reload();
                     }
+                } else {
+                    alert(data.error || 'Gagal mengubah status');
                 }
                 return;
             }

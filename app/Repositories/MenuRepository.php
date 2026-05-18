@@ -270,9 +270,10 @@ final class MenuRepository
     }
     public function updateStock(int $menuId, int $warungId, int $newStock): bool
     {
-        $sql = 'UPDATE menus SET stock_quantity = ? WHERE id = ? AND warung_id = ?';
+        $isAvailable = $newStock > 0 ? 1 : 0;
+        $sql = 'UPDATE menus SET stock_quantity = ?, is_available = ? WHERE id = ? AND warung_id = ?';
         $stmt = Database::mysqli()->prepare($sql);
-        $stmt->bind_param('iii', $newStock, $menuId, $warungId);
+        $stmt->bind_param('iiii', $newStock, $isAvailable, $menuId, $warungId);
         $stmt->execute();
         $ok = $stmt->affected_rows >= 0;
         $stmt->close();

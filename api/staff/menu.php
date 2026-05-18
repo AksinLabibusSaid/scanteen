@@ -42,6 +42,14 @@ if ($action === 'availability') {
     $next = (int) ($data['is_available'] ?? 0);
     // basic check
     if ($repo->menuBelongsToVenue($menuId, $venueId)) {
+        if ($next === 1) {
+            $menuMap = $repo->mapByIds([$menuId]);
+            $menu = $menuMap[$menuId] ?? null;
+            if ($menu !== null && (int) ($menu['stock_quantity'] ?? 0) <= 0) {
+                echo json_encode(['ok' => false, 'error' => 'Stok kosong, menu tidak dapat diaktifkan! Silakan isi stok terlebih dahulu.']);
+                exit;
+            }
+        }
         $ok = $repo->setAvailability($menuId, $next);
         echo json_encode(['ok' => $ok]);
     } else {

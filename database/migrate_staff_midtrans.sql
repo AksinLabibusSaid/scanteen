@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS staff_users (
   email           VARCHAR(180)    NOT NULL,
   password_hash   VARCHAR(255)    NOT NULL,
   name            VARCHAR(120)    NOT NULL,
+  phone           VARCHAR(24)     DEFAULT NULL,
   role            ENUM('admin','kasir','warung') NOT NULL,
   warung_id       BIGINT UNSIGNED DEFAULT NULL,
   is_active       TINYINT(1)      NOT NULL DEFAULT 1,

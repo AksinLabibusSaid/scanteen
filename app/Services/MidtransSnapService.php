@@ -75,30 +75,62 @@ final class MidtransSnapService
         ];
 
         $body = json_encode($payload, JSON_THROW_ON_ERROR);
-        $ch = curl_init($base);
-        if ($ch === false) {
-            throw new \RuntimeException('Gagal inisialisasi HTTP.');
-        }
+        $headers = [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: Basic ' . base64_encode($serverKey . ':'),
+        ];
 
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json',
-                'Authorization: Basic ' . base64_encode($serverKey . ':'),
-            ],
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
-        ]);
+        if (function_exists('curl_init')) {
+            $ch = curl_init($base);
+            if ($ch === false) {
+                throw new \RuntimeException('Gagal inisialisasi HTTP.');
+            }
 
-        $raw = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
-        curl_close($ch);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 30,
+            ]);
 
-        if (!is_string($raw)) {
-            throw new \RuntimeException('Respons Midtrans kosong: ' . $err);
+            $raw = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if (!is_string($raw)) {
+                throw new \RuntimeException('Respons Midtrans kosong: ' . $err);
+            }
+        } else {
+            // Fallback for environments where PHP cURL extension is not enabled (e.g. fresh Laragon / Windows PHP)
+            $context = stream_context_create([
+                'http' => [
+                    'method'        => 'POST',
+                    'header'        => implode("\r\n", $headers),
+                    'content'       => $body,
+                    'ignore_errors' => true, // Retrieve response body even on error codes
+                    'timeout'       => 30,
+                ],
+            ]);
+
+            $raw = @file_get_contents($base, false, $context);
+            if ($raw === false) {
+                $err = error_get_last();
+                throw new \RuntimeException('Gagal menghubungi Midtrans: ' . ($err['message'] ?? 'Unknown error'));
+            }
+
+            // Extract HTTP status code from $http_response_header
+            $code = 200;
+            if (isset($http_response_header) && is_array($http_response_header)) {
+                foreach ($http_response_header as $header) {
+                    if (preg_match('#HTTP/[0-9.]+\s+([0-9]+)#', $header, $matches)) {
+                        $code = (int) $matches[1];
+                        break;
+                    }
+                }
+            }
         }
 
         $decoded = json_decode($raw, true);

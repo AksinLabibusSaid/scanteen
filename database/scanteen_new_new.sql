@@ -267,6 +267,7 @@ CREATE TABLE `staff_users` (
   `email` varchar(180) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `name` varchar(120) NOT NULL,
+  `phone` varchar(24) DEFAULT NULL,
   `role` enum('admin','kasir','warung') NOT NULL,
   `warung_id` bigint UNSIGNED DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',

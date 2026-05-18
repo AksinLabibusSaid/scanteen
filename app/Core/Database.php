@@ -33,6 +33,13 @@ final class Database
             // Ignore if column is already updated or other transient errors
         }
 
+        // Self-healing migration to support 'phone' column in staff_users
+        try {
+            $mysqli->query("ALTER TABLE staff_users ADD COLUMN phone VARCHAR(24) DEFAULT NULL AFTER name");
+        } catch (\Throwable $e) {
+            // Ignore if column already exists or other transient errors
+        }
+
         self::$connection = $mysqli;
     }
 

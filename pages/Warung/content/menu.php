@@ -156,7 +156,7 @@ $filteredMenus = array_filter($menus, function($m) use ($currentTab, $search) {
                                 <td class="px-10 py-6">
                                     <div class="flex items-center gap-5">
                                         <div class="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100 shadow-sm">
-                                            <img src="<?= htmlspecialchars($m['image_url'] ?: PublicUrl::asset('images/placeholder-menu.png')) ?>" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                            <img src="<?= htmlspecialchars($m['image_url'] ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400') ?>" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                         </div>
                                         <div>
                                             <h4 class="text-base font-black text-[#261817] leading-tight mb-1"><?= htmlspecialchars((string) $m['name'], ENT_QUOTES, 'UTF-8') ?></h4>
@@ -390,8 +390,9 @@ $filteredMenus = array_filter($menus, function($m) use ($currentTab, $search) {
                 this.parentElement.style.opacity = '1';
                 const labelSpan = this.parentElement.nextElementSibling;
                 if (labelSpan) {
-                    labelSpan.innerText = is_available ? 'Aktif' : 'Nonaktif';
-                    labelSpan.className = `text-[10px] font-black uppercase tracking-widest ${is_available ? 'text-emerald-600' : 'text-red-500'}`;
+                    const currentChecked = this.checked;
+                    labelSpan.innerText = currentChecked ? 'Aktif' : 'Nonaktif';
+                    labelSpan.className = `text-[10px] font-black uppercase tracking-widest ${currentChecked ? 'text-emerald-600' : 'text-red-500'}`;
                 }
             }
           }));
