@@ -74,7 +74,8 @@ if ($customerHasAccess && $customerContext !== null) {
     }
     $_SESSION['customer_last_seen_order_statuses'] = $currentStatusStr;
 
-    // Track venue settings for auto-refresh
+    // Track venue settings for auto-refresh (Disabled temporarily due to missing columns in venues table)
+    /*
     $venueIdForTrack = $_SESSION[CustomerSessionKeys::VENUE_ID] ?? 0;
     if ($venueIdForTrack > 0) {
         $stmtv = $mysqli->prepare("SELECT maintenance_mode, operating_hours, allow_qris, allow_cash, allow_debit FROM venues WHERE id = ?");
@@ -85,6 +86,7 @@ if ($customerHasAccess && $customerContext !== null) {
         
         $_SESSION['customer_last_seen_venue_state'] = md5(json_encode($v));
     }
+    */
 
     $customerOrder = null;
     $tok = '';

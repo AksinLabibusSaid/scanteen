@@ -211,14 +211,8 @@ if (StaffAuth::check()) {
                     </form>
 
                     <div class="border-t border-[#E3E2E0] pt-6">
-                        <p class="text-center text-base">
-                            <span class="text-[#5F5E5B] font-normal">Belum punya akun?</span>
-                            <button type="button" id="btn-register-hint" class="text-maroon font-semibold hover:underline ml-1">
-                                Daftar di sini
-                            </button>
-                        </p>
                         <p class="text-center text-xs text-[#8E706C] mt-3 max-w-sm mx-auto leading-relaxed">
-                            Akun staff dibuat oleh administrator dari panel Admin. Pelanggan memesan dengan scan QR meja, tanpa login di halaman ini.
+                            © 2026 Scanteen. All rights reserved.
                         </p>
                     </div>
                 </div>

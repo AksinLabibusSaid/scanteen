@@ -162,6 +162,10 @@ final class OrderCreationService
                 ) VALUES (?,?,?,?,?,?,?,?)
                 SQL;
             $itemStmt = $db->prepare($itemSql);
+            
+            $stockSql = "UPDATE menus SET stock_quantity = stock_quantity - ? WHERE id = ?";
+            $stockStmt = $db->prepare($stockSql);
+            
             $warungIds = [];
             foreach ($preparedLines as $pl) {
                 $note = $pl['note'] === '' ? null : $pl['note'];
@@ -172,6 +176,7 @@ final class OrderCreationService
                 $unit = $pl['unit_price'];
                 $qty = $pl['qty'];
                 $ls = $pl['line_subtotal'];
+                
                 $itemStmt->bind_param(
                     'iiisdisd',
                     $orderId,
@@ -184,8 +189,12 @@ final class OrderCreationService
                     $ls
                 );
                 $itemStmt->execute();
+                
+                $stockStmt->bind_param('ii', $qty, $mid);
+                $stockStmt->execute();
             }
             $itemStmt->close();
+            $stockStmt->close();
 
             $fulSql = 'INSERT IGNORE INTO order_warung_fulfillment (order_id, warung_id, status) VALUES (?, ?, \'new\')';
             $fulStmt = $db->prepare($fulSql);

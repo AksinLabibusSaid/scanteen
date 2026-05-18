@@ -14,10 +14,12 @@ final class WarungRepository
     public function listByVenueId(int $venueId): array
     {
         $sql = <<<SQL
-            SELECT id, venue_id, name, slug, sort_order, is_active, created_at
-            FROM warungs
-            WHERE venue_id = ?
-            ORDER BY sort_order ASC, id ASC
+            SELECT w.id, w.venue_id, w.name, w.slug, w.sort_order, w.is_active, w.created_at,
+                   u.name AS owner_name, u.phone AS owner_phone
+            FROM warungs w
+            LEFT JOIN staff_users u ON w.id = u.warung_id AND u.role = 'warung'
+            WHERE w.venue_id = ?
+            ORDER BY w.sort_order ASC, w.id ASC
             SQL;
         $stmt = Database::mysqli()->prepare($sql);
         $stmt->bind_param('i', $venueId);

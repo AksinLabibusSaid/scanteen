@@ -18,10 +18,7 @@ $allMenus    = $menuRepo->listAdminByVenue($venueId, $filterWarungId);
 $warungs     = $warungRepo->listByVenueId($venueId);
 $categories  = $menuRepo->listCategories();
 
-// Filter by category
-if ($filterCategoryId !== null) {
-    $allMenus = array_values(array_filter($allMenus, fn($m) => (int)$m['category_id'] === $filterCategoryId));
-}
+// Category filter is now handled client-side for smoother transition
 
 // Count per category
 $catCounts = [];
@@ -75,7 +72,8 @@ $apiBase = PublicUrl::basePath();
             <h3 class="poppins text-base font-bold text-[var(--text-dark)] mb-6 ml-2">Kategori</h3>
             <nav class="space-y-2">
                 <a href="?page=menus<?= $filterWarungId ? '&warung_id='.$filterWarungId : '' ?>"
-                   class="spa-link flex items-center justify-between px-4 py-3 rounded-2xl transition-all <?= $filterCategoryId === null ? 'bg-[var(--brand-muted)] border-l-4 border-[var(--brand)]' : 'hover:bg-gray-50' ?>">
+                   data-category-id="all"
+                   class="category-filter-link flex items-center justify-between px-4 py-3 rounded-2xl transition-all <?= $filterCategoryId === null ? 'bg-[var(--brand-muted)] border-l-4 border-[var(--brand)]' : 'hover:bg-gray-50' ?>">
                     <div class="flex items-center gap-3">
                         <?php if ($filterCategoryId === null): ?>
                         <div class="w-1.5 h-1.5 rounded-full bg-[var(--brand)]"></div>
@@ -85,9 +83,11 @@ $apiBase = PublicUrl::basePath();
                     <span class="<?= $filterCategoryId === null ? 'bg-[var(--brand-soft)] text-[var(--brand)]' : 'bg-gray-100 text-gray-400' ?> px-2 py-0.5 rounded text-[9px] font-black"><?= count($allForCount) ?></span>
                 </a>
                 <?php foreach ($categories as $cat): ?>
+                <?php if ((int)$cat['id'] === 1) continue; ?>
                 <?php $cnt = $catCounts[(int)$cat['id']] ?? 0; $isActive = $filterCategoryId === (int)$cat['id']; ?>
                 <a href="?page=menus&category_id=<?= $cat['id'] ?><?= $filterWarungId ? '&warung_id='.$filterWarungId : '' ?>"
-                   class="spa-link flex items-center justify-between px-4 py-3 rounded-2xl transition-all <?= $isActive ? 'bg-[var(--brand-muted)] border-l-4 border-[var(--brand)]' : 'hover:bg-gray-50' ?>">
+                   data-category-id="<?= $cat['id'] ?>"
+                   class="category-filter-link flex items-center justify-between px-4 py-3 rounded-2xl transition-all <?= $isActive ? 'bg-[var(--brand-muted)] border-l-4 border-[var(--brand)]' : 'hover:bg-gray-50' ?>">
                     <div class="flex items-center gap-3">
                         <?php if ($isActive): ?>
                         <div class="w-1.5 h-1.5 rounded-full bg-[var(--brand)]"></div>
@@ -148,7 +148,7 @@ $apiBase = PublicUrl::basePath();
                 $isAvailable = (int)$m['is_available'] === 1;
                 $imgUrl = !empty($m['image_url']) ? $m['image_url'] : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
             ?>
-            <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-md transition-all">
+            <div class="menu-item bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-md transition-all" data-category-id="<?= $m['category_id'] ?>">
                 <div class="h-44 overflow-hidden relative">
                     <img src="<?= htmlspecialchars($imgUrl, ENT_QUOTES, 'UTF-8') ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400'">
                     <div class="absolute top-4 left-4">
@@ -255,6 +255,7 @@ $apiBase = PublicUrl::basePath();
                     <select id="menuCategoryId" name="category_id" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--brand-soft)]" required>
                         <option value="">Pilih Kategori</option>
                         <?php foreach ($categories as $cat): ?>
+                        <?php if ((int)$cat['id'] === 1) continue; ?>
                         <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name'], ENT_QUOTES, 'UTF-8') ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -368,6 +369,58 @@ $apiBase = PublicUrl::basePath();
     // Event Delegation for Edit, Delete, Toggle
     if (!document._scanteenMenusListenerAttached) {
         document.addEventListener('click', async (e) => {
+            // Category Filter Link
+            const filterLink = e.target.closest('.category-filter-link');
+            if (filterLink) {
+                e.preventDefault();
+                const catId = filterLink.dataset.categoryId;
+                
+                // Update active state in sidebar
+                document.querySelectorAll('.category-filter-link').forEach(link => {
+                    link.classList.remove('bg-[var(--brand-muted)]', 'border-l-4', 'border-[var(--brand)]');
+                    link.classList.add('hover:bg-gray-50');
+                    const span = link.querySelector('span.text-xs');
+                    if (span) {
+                        span.classList.remove('text-[var(--brand)]', 'uppercase', 'tracking-wider', 'font-black');
+                        span.classList.add('text-[var(--text-muted)]', 'ml-4', 'font-bold');
+                    }
+                    const dot = link.querySelector('div.w-1.5');
+                    if (dot) dot.remove();
+                });
+                
+                filterLink.classList.add('bg-[var(--brand-muted)]', 'border-l-4', 'border-[var(--brand)]');
+                filterLink.classList.remove('hover:bg-gray-50');
+                const span = filterLink.querySelector('span.text-xs');
+                if (span) {
+                    span.classList.remove('text-[var(--text-muted)]', 'ml-4', 'font-bold');
+                    span.classList.add('text-[var(--brand)]', 'uppercase', 'tracking-wider', 'font-black');
+                    
+                    const dot = document.createElement('div');
+                    dot.className = 'w-1.5 h-1.5 rounded-full bg-[var(--brand)] mr-2';
+                    span.parentNode.insertBefore(dot, span);
+                }
+                
+                // Filter items
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    if (catId === 'all' || item.dataset.categoryId === catId) {
+                        item.classList.remove('hidden');
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                // Update URL without reload
+                const url = new URL(window.location.href);
+                if (catId === 'all') {
+                    url.searchParams.delete('category_id');
+                } else {
+                    url.searchParams.set('category_id', catId);
+                }
+                history.pushState({}, '', url);
+                
+                return;
+            }
+
             // Edit Button
             const editBtn = e.target.closest('.btn-menu-edit');
             if (editBtn) {

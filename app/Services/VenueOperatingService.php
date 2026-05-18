@@ -17,8 +17,8 @@ final class VenueOperatingService
             return ['isOpen' => false, 'reason' => 'Venue not found'];
         }
 
-        if ((int)$venue['maintenance_mode'] === 1) {
-            return ['isOpen' => false, 'reason' => 'maintenance', 'message' => $venue['maintenance_message']];
+        if ((int)($venue['maintenance_mode'] ?? 0) === 1) {
+            return ['isOpen' => false, 'reason' => 'maintenance', 'message' => $venue['maintenance_message'] ?? 'Sedang dalam pemeliharaan.'];
         }
 
         $oh = json_decode($venue['operating_hours'] ?? '{}', true);

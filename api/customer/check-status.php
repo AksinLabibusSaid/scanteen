@@ -43,9 +43,10 @@ try {
     
     $orderChanged = ($sessionStatusStr !== $currentStatusStr);
 
-    // 3. Check venue settings
-    $venueId = $_SESSION[CustomerSessionKeys::VENUE_ID] ?? 0;
+    // 3. Check venue settings (Disabled temporarily due to missing columns in venues table)
     $venueChanged = false;
+    /*
+    $venueId = $_SESSION[CustomerSessionKeys::VENUE_ID] ?? 0;
     if ($venueId > 0) {
         $stmt = $mysqli->prepare("SELECT maintenance_mode, operating_hours, allow_qris, allow_cash, allow_debit FROM venues WHERE id = ?");
         $stmt->bind_param('i', $venueId);
@@ -58,6 +59,7 @@ try {
         
         $venueChanged = ($sessionVenueState !== $currentVenueState);
     }
+    */
 
     // 4. Auto-clear table after 5 minutes of completion
     $stmt = $mysqli->prepare("SELECT id, status, updated_at FROM orders WHERE dining_table_id = ?");

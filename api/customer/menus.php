@@ -19,8 +19,9 @@ $categories = [];
 foreach ($rows as $r) {
     $wid = (int) $r['warung_id'];
     $warungs[$wid] = (string) $r['warung_name'];
-    if (($r['category_slug'] ?? '') !== 'semua') {
-        $categories[(int) $r['category_id']] = (string) $r['category_name'];
+    $catName = (string) $r['category_name'];
+    if ((int) $r['category_id'] !== 1) {
+        $categories[(int) $r['category_id']] = $catName;
     }
 }
 

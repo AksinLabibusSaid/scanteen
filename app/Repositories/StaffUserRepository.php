@@ -28,6 +28,17 @@ final class StaffUserRepository
         return $row !== null ? $row : null;
     }
 
+    public function findByWarungId(int $warungId): ?array
+    {
+        $sql = 'SELECT id, email, role, warung_id, name, phone FROM staff_users WHERE warung_id = ? LIMIT 1';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('i', $warungId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $row;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */
@@ -83,6 +94,7 @@ final class StaffUserRepository
         string $name,
         string $role,
         ?int $warungId,
+        ?string $phone = null
     ): int {
         $email = trim($email);
         $name = trim($name);
@@ -90,18 +102,18 @@ final class StaffUserRepository
         $mysqli = Database::mysqli();
         if ($warungId === null) {
             $sql = <<<SQL
-                INSERT INTO staff_users (venue_id, email, password_hash, name, role, warung_id, is_active)
-                VALUES (?,?,?,?,?,NULL,1)
+                INSERT INTO staff_users (venue_id, email, password_hash, name, phone, role, warung_id, is_active)
+                VALUES (?,?,?,?,?,?,NULL,1)
                 SQL;
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('issss', $venueId, $email, $hash, $name, $role);
+            $stmt->bind_param('isssss', $venueId, $email, $hash, $name, $phone, $role);
         } else {
             $sql = <<<SQL
-                INSERT INTO staff_users (venue_id, email, password_hash, name, role, warung_id, is_active)
-                VALUES (?,?,?,?,?,?,1)
+                INSERT INTO staff_users (venue_id, email, password_hash, name, phone, role, warung_id, is_active)
+                VALUES (?,?,?,?,?,?,?,1)
                 SQL;
             $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('issssi', $venueId, $email, $hash, $name, $role, $warungId);
+            $stmt->bind_param('isssssi', $venueId, $email, $hash, $name, $phone, $role, $warungId);
         }
         $stmt->execute();
         $id = (int) $stmt->insert_id;
@@ -132,6 +144,18 @@ final class StaffUserRepository
         $ok = $stmt->affected_rows === 1;
         $stmt->close();
 
+        return $ok;
+    }
+
+    public function updateInfo(int $userId, string $name, ?string $phone): bool
+    {
+        $name = trim($name);
+        $sql = 'UPDATE staff_users SET name = ?, phone = ? WHERE id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ssi', $name, $phone, $userId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows === 1;
+        $stmt->close();
         return $ok;
     }
 }

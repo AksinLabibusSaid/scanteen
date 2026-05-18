@@ -24,9 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = trim((string) ($_POST['password'] ?? ''));
 
         if ($name !== '' && $email !== '' && $password !== '') {
-            $wid = $repo->insert($venueId, $name, $ownerName, $ownerPhone);
-            if ($wid > 0) {
-                $userRepo->insert($venueId, $email, $password, $ownerName ?: $name, 'tenant', $wid);
+            try {
+                \App\Core\Database::transaction(function() use ($venueId, $name, $ownerName, $ownerPhone, $email, $password, $repo, $userRepo) {
+                    $wid = $repo->insert($venueId, $name, $ownerName, $ownerPhone);
+                    if ($wid > 0) {
+                        $userRepo->insert($venueId, $email, $password, $ownerName ?: $name, 'warung', $wid, $ownerPhone);
+                    }
+                });
+            } catch (\Throwable $e) {
+                // Let the exception bubble up or handle it
+                throw $e;
             }
         }
     }
@@ -36,8 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string) ($_POST['name'] ?? ''));
         $ownerName = trim((string) ($_POST['owner_name'] ?? ''));
         $ownerPhone = trim((string) ($_POST['owner_phone'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+
         if ($id > 0 && $name !== '') {
-            $repo->updateInfo($id, $venueId, $name, $ownerName, $ownerPhone);
+            $repo->updateInfo($id, $venueId, $name);
+            
+            $user = $userRepo->findByWarungId($id);
+            if ($user !== null) {
+                $userRepo->updateInfo((int)$user['id'], $ownerName ?: $name, $ownerPhone);
+                
+                if ($password !== '') {
+                    $userRepo->updatePassword((int)$user['id'], $venueId, $password);
+                }
+            }
         }
     }
 
@@ -138,6 +156,8 @@ function scanteen_admin_tenant_dot_class(bool $isActive): string
             $name = (string) $warung['name'];
             $ownerName = (string) ($warung['owner_name'] ?? '-');
             $ownerPhone = (string) ($warung['owner_phone'] ?? '-');
+            $rawOwnerName = (string) ($warung['owner_name'] ?? '');
+            $rawOwnerPhone = (string) ($warung['owner_phone'] ?? '');
             $initials = scanteen_admin_tenant_initials($name);
             $createdAt = !empty($warung['created_at']) ? date('d M Y', strtotime((string) $warung['created_at'])) : '-';
             ?>
@@ -160,8 +180,8 @@ function scanteen_admin_tenant_dot_class(bool $isActive): string
                             <button class="btn-rename-warung p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-[var(--brand)] hover:bg-[#FDE8E4] transition-all" title="Edit Warung"
                                 data-id="<?= $id ?>" 
                                 data-name="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"
-                                data-owner="<?= htmlspecialchars($ownerName, ENT_QUOTES, 'UTF-8') ?>"
-                                data-phone="<?= htmlspecialchars($ownerPhone, ENT_QUOTES, 'UTF-8') ?>">
+                                data-owner="<?= htmlspecialchars($rawOwnerName, ENT_QUOTES, 'UTF-8') ?>"
+                                data-phone="<?= htmlspecialchars($rawOwnerPhone, ENT_QUOTES, 'UTF-8') ?>">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
                             <button class="btn-delete-warung p-2 rounded-lg bg-gray-50 text-gray-400 hover:text-[#BA1A1A] hover:bg-red-50 transition-all" 
@@ -285,6 +305,10 @@ function scanteen_admin_tenant_dot_class(bool $isActive): string
                 <label class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block ml-1">Nomor Telepon</label>
                 <input type="text" name="owner_phone" id="renameOwnerPhone" placeholder="081xxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[var(--brand-soft)] transition-all">
             </div>
+            <div class="space-y-2">
+                <label class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block ml-1">Password Baru (Kosongkan jika tidak diubah)</label>
+                <input type="password" name="password" id="renamePassword" placeholder="********" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[var(--brand-soft)] transition-all">
+            </div>
         </form>
         <div class="px-8 py-5 border-t border-gray-100 flex gap-3">
             <button id="btnCancelRename" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Batal</button>
@@ -321,6 +345,8 @@ function scanteen_admin_tenant_dot_class(bool $isActive): string
             document.getElementById('renameWarungName').value = btn.dataset.name;
             document.getElementById('renameOwnerName').value = btn.dataset.owner;
             document.getElementById('renameOwnerPhone').value = btn.dataset.phone;
+            const pwdInput = document.getElementById('renamePassword');
+            if (pwdInput) pwdInput.value = '';
             modalR.classList.remove('hidden');
             modalR.classList.add('flex');
         });
