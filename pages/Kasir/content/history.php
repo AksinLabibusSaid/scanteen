@@ -95,7 +95,6 @@ function scanteen_kasir_history_status_label(string $s): string
                 $tabs = [
                     'all' => 'Semua',
                     'completed' => 'Selesai',
-                    'cancelled' => 'Batal'
                 ];
                 $activeTab = $_GET['status'] ?? 'all';
                 foreach ($tabs as $key => $label):

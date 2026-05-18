@@ -160,3 +160,11 @@ $warungStatusMapping = [
         </button>
     </div>
 </div>
+
+<?php if (($ord['status'] ?? '') === 'completed'): ?>
+<script>
+    setTimeout(function() {
+        window.location.href = './index.php?page=home';
+    }, 60000); // 1 menit (60 detik)
+</script>
+<?php endif; ?>

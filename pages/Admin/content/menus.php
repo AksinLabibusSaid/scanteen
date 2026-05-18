@@ -277,9 +277,9 @@ $apiBase = PublicUrl::basePath();
                 <input type="url" id="menuImageUrl" name="image_url" placeholder="https://..." class="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--brand-soft)]">
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="hidden">
                 <label class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Tersedia</label>
-                <input type="checkbox" id="menuIsAvailable" name="is_available" class="w-4 h-4 rounded accent-[var(--brand)]" checked>
+                <input type="checkbox" id="menuIsAvailable" name="is_available" class="w-4 h-4 rounded accent-[var(--brand)]">
             </div>
         </form>
         <div class="px-8 py-5 border-t border-gray-100 flex gap-3">

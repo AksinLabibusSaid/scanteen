@@ -30,6 +30,65 @@ final class CustomerAccess
             return false;
         }
 
+        // Check if table is occupied (active orders or scanning state)
+        $isOccupied = false;
+        try {
+            $mysqli = \App\Core\Database::mysqli();
+            
+            // A. Check active orders
+            $stmtOrder = $mysqli->prepare("SELECT COUNT(*) AS c FROM orders WHERE dining_table_id = ? AND status IN ('accepted', 'processing', 'ready', 'paid')");
+            $stmtOrder->bind_param('i', $row['dining_table_id']);
+            $stmtOrder->execute();
+            $resOrder = $stmtOrder->get_result()->fetch_assoc();
+            $stmtOrder->close();
+            
+            if ((int)($resOrder['c'] ?? 0) > 0) {
+                $isOccupied = true;
+            } else {
+                // B. Check scan state
+                $stmtScanTime = $mysqli->prepare("SELECT last_scanned_at, last_cleared_at FROM dining_tables WHERE id = ?");
+                $stmtScanTime->bind_param('i', $row['dining_table_id']);
+                $stmtScanTime->execute();
+                $resScanTime = $stmtScanTime->get_result()->fetch_assoc();
+                $stmtScanTime->close();
+                
+                $lastScan = $resScanTime['last_scanned_at'] ?? null;
+                $lastClear = $resScanTime['last_cleared_at'] ?? null;
+                
+                if ($lastScan !== null) {
+                    if ($lastClear === null || strtotime($lastScan) > strtotime($lastClear)) {
+                        $isOccupied = true;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        // If occupied, check if same user session
+        if ($isOccupied) {
+            $currentSessionTableId = $_SESSION[CustomerSessionKeys::TABLE_ID] ?? null;
+            if ($currentSessionTableId !== (int) $row['dining_table_id']) {
+                // Not the same session/device! Block and redirect.
+                $_SESSION['scan_error_type'] = 'occupied';
+                $_SESSION['scan_error_table'] = (string) $row['table_number'];
+                $_SESSION['scan_error'] = "Meja " . htmlspecialchars($row['table_number']) . " sedang digunakan oleh pelanggan lain.";
+                header('Location: ./index.php?page=need-scan');
+                exit;
+            }
+        }
+
+        // Update last_scanned_at when barcode is scanned
+        try {
+            $mysqli = \App\Core\Database::mysqli();
+            $resScan = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_scanned_at'");
+            if ($resScan->num_rows === 0) {
+                $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_scanned_at DATETIME NULL");
+            }
+            $stmtScan = $mysqli->prepare("UPDATE dining_tables SET last_scanned_at = NOW() WHERE id = ?");
+            $stmtScan->bind_param('i', $row['dining_table_id']);
+            $stmtScan->execute();
+            $stmtScan->close();
+        } catch (\Throwable $e) {}
+
         if (isset($_SESSION[CustomerSessionKeys::TABLE_ID]) && (int) $_SESSION[CustomerSessionKeys::TABLE_ID] !== (int) $row['dining_table_id']) {
             self::clear();
         }

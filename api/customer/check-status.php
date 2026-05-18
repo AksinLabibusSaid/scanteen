@@ -15,6 +15,49 @@ if ($cid <= 0) {
     exit;
 }
 
+// Check 5 minutes inactivity (300 seconds)
+$lastAct = $_SESSION['last_activity'] ?? null;
+if ($lastAct !== null && (time() - $lastAct) > 300) {
+    // Clear session and set last_cleared_at to make it available
+    try {
+        $mysqli = \App\Core\Database::mysqli();
+        $now = date('Y-m-d H:i:s');
+        $stmtClear = $mysqli->prepare("UPDATE dining_tables SET last_cleared_at = ? WHERE id = ?");
+        $stmtClear->bind_param('si', $now, $cid);
+        $stmtClear->execute();
+        $stmtClear->close();
+    } catch (\Throwable $e) {}
+
+    unset(
+        $_SESSION[CustomerSessionKeys::TABLE_ID],
+        $_SESSION[CustomerSessionKeys::TABLE_NUMBER],
+        $_SESSION[CustomerSessionKeys::VENUE_ID],
+        $_SESSION[CustomerSessionKeys::VENUE_NAME],
+        $_SESSION[CustomerSessionKeys::BARCODE_TOKEN],
+        $_SESSION[CustomerSessionKeys::CART],
+        $_SESSION[CustomerSessionKeys::CHECKOUT_DRAFT],
+        $_SESSION[CustomerSessionKeys::LAST_ORDER_TOKEN],
+    );
+    $_SESSION['scan_error_type'] = 'inactivity';
+    $_SESSION['scan_error'] = "Sesi Anda telah berakhir karena tidak ada aktivitas selama 5 menit.";
+    echo json_encode(['cleared' => true, 'order_changed' => false, 'venue_changed' => false]);
+    exit;
+}
+$_SESSION['last_activity'] = time();
+
+// Update last_activity_at in database
+try {
+    $mysqli = \App\Core\Database::mysqli();
+    $resAct = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_activity_at'");
+    if ($resAct->num_rows === 0) {
+        $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_activity_at DATETIME NULL");
+    }
+    $stmtAct = $mysqli->prepare("UPDATE dining_tables SET last_activity_at = NOW() WHERE id = ?");
+    $stmtAct->bind_param('i', $cid);
+    $stmtAct->execute();
+    $stmtAct->close();
+} catch (\Throwable $e) {}
+
 try {
     $mysqli = \App\Core\Database::mysqli();
     

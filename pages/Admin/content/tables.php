@@ -8,6 +8,20 @@ use App\Core\Database;
 use chillerlan\QRCode\QRCode;
 
 $venueId = (int) StaffAuth::venueId();
+$mysqli = Database::mysqli();
+
+// Ensure columns exist on dining_tables
+try {
+    $resScan = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_scanned_at'");
+    if ($resScan->num_rows === 0) {
+        $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_scanned_at DATETIME NULL");
+    }
+    $resClear = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_cleared_at'");
+    if ($resClear->num_rows === 0) {
+        $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_cleared_at DATETIME NULL");
+    }
+} catch (\Throwable $e) {}
+
 $dtr = new DiningTableRepository();
 $allTables = $dtr->listByVenueId($venueId);
 
@@ -15,33 +29,8 @@ $filterStatus = $_GET['status'] ?? null;
 
 // summary counts (always calculate from all tables)
 $totalTablesCount = count($allTables);
-$activeTablesCount = 0;
-foreach ($allTables as $tt) {
-    if ((int) ($tt['is_active'] ?? 0) === 1) {
-        $activeTablesCount++;
-    }
-}
 
-// occupied tables
-$mysqli = Database::mysqli();
-$sql = 'SELECT COUNT(DISTINCT dining_table_id) AS c FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND status IN (\'accepted\', \'processing\', \'ready\', \'paid\')';
-$stmt = $mysqli->prepare($sql);
-$stmt->bind_param('i', $venueId);
-$stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-$occupiedTablesCount = (int) ($row['c'] ?? 0);
-
-// scans today
-$sql2 = 'SELECT COUNT(*) AS c FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND DATE(created_at) = CURDATE()';
-$stmt2 = $mysqli->prepare($sql2);
-$stmt2->bind_param('i', $venueId);
-$stmt2->execute();
-$row2 = $stmt2->get_result()->fetch_assoc();
-$stmt2->close();
-$scansToday = (int) ($row2['c'] ?? 0);
-
-// occupied ids
+// occupied ids from active orders
 $activeIds = [];
 $sql3 = 'SELECT DISTINCT dining_table_id FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND status IN (\'accepted\', \'processing\', \'ready\', \'paid\')';
 $stmt3 = $mysqli->prepare($sql3);
@@ -53,12 +42,60 @@ while ($r = $res3->fetch_assoc()) {
 }
 $stmt3->close();
 
+// determine occupied tables list using both orders and scan timestamps
+$occupiedTableIds = [];
+foreach ($allTables as $t) {
+    $tid = (int) $t['id'];
+    $hasActiveOrder = in_array($tid, $activeIds, true);
+    
+    $lastScan = $t['last_scanned_at'] ?? null;
+    $lastClear = $t['last_cleared_at'] ?? null;
+    $lastActivity = $t['last_activity_at'] ?? null;
+    
+    $isScannedActive = false;
+    if ($lastScan !== null) {
+        if ($lastClear === null || strtotime($lastScan) > strtotime($lastClear)) {
+            // Check if activity is still fresh (within 5 minutes / 300 seconds)
+            $activityFresh = true;
+            if ($lastActivity !== null) {
+                if ((time() - strtotime($lastActivity)) > 300) {
+                    $activityFresh = false;
+                }
+            } else {
+                if ((time() - strtotime($lastScan)) > 300) {
+                    $activityFresh = false;
+                }
+            }
+            
+            if ($activityFresh) {
+                $isScannedActive = true;
+            }
+        }
+    }
+    
+    if ($hasActiveOrder || $isScannedActive) {
+        $occupiedTableIds[] = $tid;
+    }
+}
+
+$occupiedTablesCount = count($occupiedTableIds);
+$activeTablesCount = $totalTablesCount - $occupiedTablesCount; // "Meja Tersedia" count
+
+// scans today
+$sql2 = 'SELECT COUNT(*) AS c FROM orders WHERE venue_id = ? AND dining_table_id IS NOT NULL AND DATE(created_at) = CURDATE()';
+$stmt2 = $mysqli->prepare($sql2);
+$stmt2->bind_param('i', $venueId);
+$stmt2->execute();
+$row2 = $stmt2->get_result()->fetch_assoc();
+$stmt2->close();
+$scansToday = (int) ($row2['c'] ?? 0);
+
 // Filter the tables for display
 $tables = $allTables;
 if ($filterStatus === 'available') {
-    $tables = array_filter($allTables, fn($t) => !in_array((int)$t['id'], $activeIds, true));
+    $tables = array_filter($allTables, fn($t) => !in_array((int)$t['id'], $occupiedTableIds, true));
 } elseif ($filterStatus === 'occupied') {
-    $tables = array_filter($allTables, fn($t) => in_array((int)$t['id'], $activeIds, true));
+    $tables = array_filter($allTables, fn($t) => in_array((int)$t['id'], $occupiedTableIds, true));
 }
 ?>
 
@@ -126,14 +163,14 @@ if ($filterStatus === 'available') {
         $token = (string) $t['barcode_token'];
         $scanUrl = PublicUrl::customerScanUrl($token);
         $qrDataUri = (new QRCode())->render($scanUrl);
-        $isOccupied = in_array($tid, $activeIds, true);
+        $isOccupied = in_array($tid, $occupiedTableIds, true);
     ?>
     <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden hover:shadow-md transition-all">
         <div class="p-8">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="poppins text-lg font-black text-[var(--text-dark)]">Meja <?= $tableNumber ?></h3>
                 <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider <?= $isOccupied ? 'bg-[#FDE8E4] text-[var(--brand)]' : 'bg-[#F0FDF4] text-[#16A34A]' ?>">
-                    <?= $isOccupied ? 'Occupied' : 'Available' ?>
+                    <?= $isOccupied ? 'Digunakan' : 'Tersedia' ?>
                 </span>
             </div>
 

@@ -40,6 +40,67 @@ final class Database
             // Ignore if column already exists or other transient errors
         }
 
+        // Self-healing migration to support settings columns in venues
+        $venueColumns = [
+            'tax_percent' => "ADD COLUMN tax_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00",
+            'service_fee_percent' => "ADD COLUMN service_fee_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00",
+            'payment_expiry_minutes' => "ADD COLUMN payment_expiry_minutes INT NOT NULL DEFAULT 15",
+            'maintenance_mode' => "ADD COLUMN maintenance_mode TINYINT(1) NOT NULL DEFAULT 0",
+            'maintenance_message' => "ADD COLUMN maintenance_message TEXT DEFAULT NULL",
+            'midtrans_client_key' => "ADD COLUMN midtrans_client_key VARCHAR(255) DEFAULT NULL",
+            'midtrans_server_key' => "ADD COLUMN midtrans_server_key VARCHAR(255) DEFAULT NULL",
+            'is_production' => "ADD COLUMN is_production TINYINT(1) NOT NULL DEFAULT 0",
+            'allow_qris' => "ADD COLUMN allow_qris TINYINT(1) NOT NULL DEFAULT 1",
+            'allow_cash' => "ADD COLUMN allow_cash TINYINT(1) NOT NULL DEFAULT 1",
+            'allow_debit' => "ADD COLUMN allow_debit TINYINT(1) NOT NULL DEFAULT 1",
+            'operating_hours' => "ADD COLUMN operating_hours TEXT DEFAULT NULL",
+        ];
+
+        foreach ($venueColumns as $col => $sql) {
+            try {
+                $mysqli->query("ALTER TABLE venues $sql");
+            } catch (\Throwable $e) {
+                // Ignore if column already exists or other transient errors
+            }
+        }
+
+        // Self-healing migration to clean up empty or duplicate slugs in warungs
+        try {
+            $res = $mysqli->query("SELECT id, name, slug FROM warungs");
+            $seenSlugs = [];
+            while ($row = $res->fetch_assoc()) {
+                $id = (int) $row['id'];
+                $name = trim((string) $row['name']);
+                $slug = trim((string) $row['slug']);
+                
+                $slugify = function(string $str) {
+                    $s = strtolower(trim($str));
+                    $s = preg_replace('/[^a-z0-9]+/', '-', $s) ?? 'warung';
+                    $s = trim($s, '-');
+                    return $s !== '' ? $s : 'warung';
+                };
+                
+                $needsUpdate = false;
+                if ($slug === '' || in_array($slug, $seenSlugs, true) || preg_match('/[^a-z0-9\-]/', $slug)) {
+                    $needsUpdate = true;
+                }
+                
+                if ($needsUpdate) {
+                    $base = $slugify($name !== '' ? $name : 'warung');
+                    $newSlug = $base . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+                    $stmt = $mysqli->prepare("UPDATE warungs SET slug = ? WHERE id = ?");
+                    $stmt->bind_param('si', $newSlug, $id);
+                    $stmt->execute();
+                    $stmt->close();
+                    $slug = $newSlug;
+                }
+                
+                $seenSlugs[] = $slug;
+            }
+        } catch (\Throwable $e) {
+            // Ignore any issues
+        }
+
         self::$connection = $mysqli;
     }
 

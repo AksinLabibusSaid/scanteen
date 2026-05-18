@@ -158,4 +158,16 @@ final class StaffUserRepository
         $stmt->close();
         return $ok;
     }
+
+    public function deleteByWarungId(int $warungId, int $venueId): bool
+    {
+        $sql = 'DELETE FROM staff_users WHERE warung_id = ? AND venue_id = ?';
+        $stmt = Database::mysqli()->prepare($sql);
+        $stmt->bind_param('ii', $warungId, $venueId);
+        $stmt->execute();
+        $ok = $stmt->affected_rows >= 0;
+        $stmt->close();
+
+        return $ok;
+    }
 }

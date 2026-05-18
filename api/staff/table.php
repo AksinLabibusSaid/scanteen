@@ -92,8 +92,35 @@ if ($action === 'clear') {
 
 if ($action === 'delete') {
     $id = (int) ($data['id'] ?? 0);
-    $ok = $repo->softDelete($id, $venueId);
-    echo json_encode(['ok' => $ok]);
+    $error = null;
+    $ok = false;
+    
+    try {
+        $ok = $repo->delete($id, $venueId);
+        if (!$ok) {
+            $ok = $repo->softDelete($id, $venueId);
+            if (!$ok) {
+                $error = 'Meja tidak ditemukan atau sudah tidak aktif.';
+            }
+        }
+    } catch (\Throwable $e) {
+        try {
+            $ok = $repo->softDelete($id, $venueId);
+            if (!$ok) {
+                $error = 'Meja tidak ditemukan.';
+            }
+        } catch (\Throwable $ex) {
+            $ok = false;
+            $error = 'Gagal menonaktifkan meja: ' . $ex->getMessage();
+        }
+    }
+    
+    header('Content-Type: application/json; charset=UTF-8');
+    if ($ok) {
+        echo json_encode(['ok' => true]);
+    } else {
+        echo json_encode(['ok' => false, 'error' => $error ?: 'Gagal menghapus meja.']);
+    }
     exit;
 }
 

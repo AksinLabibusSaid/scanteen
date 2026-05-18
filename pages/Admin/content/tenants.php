@@ -15,6 +15,7 @@ $userRepo = new StaffUserRepository();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = trim((string) ($_POST['action'] ?? ''));
     $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    $error = null;
 
     if ($action === 'create') {
         $name = trim((string) ($_POST['name'] ?? ''));
@@ -26,15 +27,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($name !== '' && $email !== '' && $password !== '') {
             try {
                 \App\Core\Database::transaction(function() use ($venueId, $name, $ownerName, $ownerPhone, $email, $password, $repo, $userRepo) {
-                    $wid = $repo->insert($venueId, $name, $ownerName, $ownerPhone);
+                    $wid = $repo->insert($venueId, $name);
                     if ($wid > 0) {
                         $userRepo->insert($venueId, $email, $password, $ownerName ?: $name, 'warung', $wid, $ownerPhone);
                     }
                 });
             } catch (\Throwable $e) {
-                // Let the exception bubble up or handle it
-                throw $e;
+                if (str_contains(strtolower($e->getMessage()), 'duplicate entry') && str_contains(strtolower($e->getMessage()), 'email')) {
+                    $error = 'Email ini sudah terdaftar. Silakan gunakan email lain.';
+                } else {
+                    $error = 'Gagal menambahkan warung: ' . $e->getMessage();
+                }
             }
+        } else {
+            $error = 'Semua field wajib harus diisi.';
         }
     }
 
@@ -46,16 +52,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = (string) ($_POST['password'] ?? '');
 
         if ($id > 0 && $name !== '') {
-            $repo->updateInfo($id, $venueId, $name);
-            
-            $user = $userRepo->findByWarungId($id);
-            if ($user !== null) {
-                $userRepo->updateInfo((int)$user['id'], $ownerName ?: $name, $ownerPhone);
+            try {
+                $repo->updateInfo($id, $venueId, $name);
                 
-                if ($password !== '') {
-                    $userRepo->updatePassword((int)$user['id'], $venueId, $password);
+                $user = $userRepo->findByWarungId($id);
+                if ($user !== null) {
+                    $userRepo->updateInfo((int)$user['id'], $ownerName ?: $name, $ownerPhone);
+                    
+                    if ($password !== '') {
+                        $userRepo->updatePassword((int)$user['id'], $venueId, $password);
+                    }
                 }
+            } catch (\Throwable $e) {
+                $error = 'Gagal mengubah data warung: ' . $e->getMessage();
             }
+        } else {
+            $error = 'Data tidak valid.';
         }
     }
 
@@ -63,22 +75,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int) ($_POST['id'] ?? 0);
         $isActive = (int) ($_POST['is_active'] ?? 1);
         if ($id > 0) {
-            $repo->setActive($id, $venueId, $isActive === 1 ? 1 : 0);
+            try {
+                $repo->setActive($id, $venueId, $isActive === 1 ? 1 : 0);
+            } catch (\Throwable $e) {
+                $error = 'Gagal mengubah status warung: ' . $e->getMessage();
+            }
+        } else {
+            $error = 'Data tidak valid.';
         }
     }
 
     if ($action === 'delete') {
         $id = (int) ($_POST['id'] ?? 0);
         if ($id > 0) {
-            $repo->delete($id, $venueId);
+            try {
+                \App\Core\Database::transaction(function() use ($id, $venueId, $repo, $userRepo) {
+                    // 1. Delete associated staff users first
+                    $userRepo->deleteByWarungId($id, $venueId);
+                    
+                    // 2. Delete menus (this will fail if they have orders, triggering the fallback)
+                    $mysqli = \App\Core\Database::mysqli();
+                    $stmtMenus = $mysqli->prepare("DELETE FROM menus WHERE warung_id = ?");
+                    $stmtMenus->bind_param('i', $id);
+                    $stmtMenus->execute();
+                    $stmtMenus->close();
+                    
+                    // 3. Delete the warung itself
+                    $repo->delete($id, $venueId);
+                });
+            } catch (\Throwable $e) {
+                try {
+                    // FALLBACK: Soft delete if there are orders/foreign key constraints
+                    $repo->softDelete($id, $venueId);
+                    
+                    // Deactivate the associated staff users as well
+                    $u = $userRepo->findByWarungId($id);
+                    if ($u !== null) {
+                        $userRepo->setActive((int)$u['id'], $venueId, 0);
+                    }
+                } catch (\Throwable $ex) {
+                    $error = 'Gagal menghapus warung: ' . $ex->getMessage();
+                }
+            }
+        } else {
+            $error = 'Data tidak valid.';
         }
     }
 
     if ($isAjax) {
-        // Return nothing for AJAX, the caller will refresh the page via scanteenLoadPage
+        header('Content-Type: application/json');
+        if ($error !== null) {
+            echo json_encode(['ok' => false, 'error' => $error]);
+        } else {
+            echo json_encode(['ok' => true]);
+        }
         exit;
     }
     
+    if ($error !== null) {
+        $_SESSION['error'] = $error;
+    }
     header('Location: ?page=tenants');
     exit;
 }
@@ -355,11 +411,16 @@ function scanteen_admin_tenant_dot_class(bool $isActive): string
     // SPA POST logic
     async function postAction(formData) {
         try {
-            await fetch(window.location.href, {
+            const res = await fetch(window.location.href, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             });
+            const data = await res.json().catch(() => ({ ok: true }));
+            if (!data.ok) {
+                alert(data.error || 'Terjadi kesalahan saat memproses data.');
+                return;
+            }
             if (typeof window.scanteenLoadPage === 'function') {
                 window.scanteenLoadPage(window.location.search || '?page=tenants');
             } else {

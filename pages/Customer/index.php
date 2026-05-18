@@ -28,6 +28,40 @@ $customerCartSummary = null;
 $checkoutDraft = null;
 
 if ($customerHasAccess && $customerContext !== null) {
+    // Check 5 minute inactivity (300 seconds)
+    $lastAct = $_SESSION['last_activity'] ?? null;
+    if ($lastAct !== null && (time() - $lastAct) > 300) {
+        // Clear session and set last_cleared_at to make it available
+        try {
+            $mysqli = \App\Core\Database::mysqli();
+            $now = date('Y-m-d H:i:s');
+            $stmtClear = $mysqli->prepare("UPDATE dining_tables SET last_cleared_at = ? WHERE id = ?");
+            $stmtClear->bind_param('si', $now, $customerContext->diningTableId);
+            $stmtClear->execute();
+            $stmtClear->close();
+        } catch (\Throwable $e) {}
+
+        \App\Customer\CustomerAccess::clear();
+        $_SESSION['scan_error_type'] = 'inactivity';
+        $_SESSION['scan_error'] = "Sesi Anda telah berakhir karena tidak ada aktivitas selama 5 menit.";
+        header('Location: ./index.php?page=need-scan');
+        exit;
+    }
+    $_SESSION['last_activity'] = time();
+
+    // Update last_activity_at in database
+    try {
+        $mysqli = \App\Core\Database::mysqli();
+        $resAct = $mysqli->query("SHOW COLUMNS FROM dining_tables LIKE 'last_activity_at'");
+        if ($resAct->num_rows === 0) {
+            $mysqli->query("ALTER TABLE dining_tables ADD COLUMN last_activity_at DATETIME NULL");
+        }
+        $stmtAct = $mysqli->prepare("UPDATE dining_tables SET last_activity_at = NOW() WHERE id = ?");
+        $stmtAct->bind_param('i', $customerContext->diningTableId);
+        $stmtAct->execute();
+        $stmtAct->close();
+    } catch (\Throwable $e) {}
+
     // Check if table was cleared by admin
     $lastCleared = null;
     try {
@@ -247,11 +281,50 @@ $innerClass = 'w-full max-w-[430px] md:max-w-[768px] lg:max-w-[1024px] relative 
     <script src="/scanteen/assets/js/customer.js"></script>
     <script>
         // Auto-refresh when state changes (table cleared, order status, or venue settings)
+        let isTransitioning = false;
         setInterval(async () => {
+            if (isTransitioning) return;
             try {
                 const res = await fetch('/scanteen/api/customer/check-status.php');
                 const data = await res.json();
-                if (data.cleared || data.order_changed || data.venue_changed) {
+                if (data.cleared) {
+                    isTransitioning = true;
+                    // Show a beautiful premium transition overlay before reloading
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.inset = '0';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.6)';
+                    overlay.style.backdropFilter = 'blur(12px)';
+                    overlay.style.webkitBackdropFilter = 'blur(12px)';
+                    overlay.style.zIndex = '999999';
+                    overlay.style.display = 'flex';
+                    overlay.style.alignItems = 'center';
+                    overlay.style.justifyContent = 'center';
+                    overlay.style.padding = '24px';
+                    overlay.innerHTML = `
+                        <div style="animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;" class="bg-white p-8 rounded-[32px] text-center max-w-sm w-full shadow-2xl border border-gray-100 flex flex-col items-center gap-5">
+                            <div class="relative w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-amber-600 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="space-y-1">
+                                <h2 class="text-lg font-extrabold text-[#7B0009] poppins uppercase tracking-tight">Sesi Anda Berakhir</h2>
+                                <p class="text-xs text-stone-500 leading-relaxed">Mengalihkan halaman sesi Anda secara aman...</p>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes scaleUp {
+                                from { opacity: 0; transform: scale(0.9) translateY(10px); }
+                                to { opacity: 1; transform: scale(1) translateY(0); }
+                            }
+                        </style>
+                    `;
+                    document.body.appendChild(overlay);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2500);
+                } else if (data.order_changed || data.venue_changed) {
                     window.location.reload();
                 }
             } catch(e) {}

@@ -163,8 +163,33 @@ final class WarungApiController extends StaffApiController
             $this->json(['ok' => false, 'error' => 'Data tidak valid'], 422);
         }
 
-        if (!(new WarungRepository())->softDelete($id, $venueId)) {
-            $this->json(['ok' => false, 'error' => 'Warung tidak ditemukan'], 404);
+        $repo = new WarungRepository();
+        $userRepo = new \App\Repositories\StaffUserRepository();
+
+        try {
+            \App\Core\Database::transaction(function() use ($id, $venueId, $repo, $userRepo) {
+                // 1. Delete associated staff users first
+                $userRepo->deleteByWarungId($id, $venueId);
+                
+                // 2. Delete menus
+                $mysqli = \App\Core\Database::mysqli();
+                $stmtMenus = $mysqli->prepare("DELETE FROM menus WHERE warung_id = ?");
+                $stmtMenus->bind_param('i', $id);
+                $stmtMenus->execute();
+                $stmtMenus->close();
+                
+                // 3. Delete the warung itself
+                $repo->delete($id, $venueId);
+            });
+        } catch (\Throwable $e) {
+            // FALLBACK: Soft delete if there are orders/foreign key constraints
+            $repo->softDelete($id, $venueId);
+            
+            // Deactivate the associated staff users as well
+            $u = $userRepo->findByWarungId($id);
+            if ($u !== null) {
+                $userRepo->setActive((int)$u['id'], $venueId, 0);
+            }
         }
 
         $this->json(['ok' => true]);
