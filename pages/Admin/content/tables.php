@@ -7,7 +7,6 @@ use App\Support\PublicUrl;
 use App\Core\Database;
 use chillerlan\QRCode\QRCode;
 
-$qrGenerator = new QRCode();
 $venueId = (int) StaffAuth::venueId();
 $dtr = new DiningTableRepository();
 $allTables = $dtr->listByVenueId($venueId);
@@ -126,7 +125,7 @@ if ($filterStatus === 'available') {
         $tableNumber = htmlspecialchars((string) $t['table_number'], ENT_QUOTES, 'UTF-8');
         $token = (string) $t['barcode_token'];
         $scanUrl = PublicUrl::customerScanUrl($token);
-        $qrDataUri = $qrGenerator->render($scanUrl);
+        $qrDataUri = (new QRCode())->render($scanUrl);
         $isOccupied = in_array($tid, $activeIds, true);
     ?>
     <div class="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden hover:shadow-md transition-all">
@@ -139,7 +138,10 @@ if ($filterStatus === 'available') {
             </div>
 
             <div class="flex items-center justify-center py-6 bg-gray-50 rounded-2xl mb-8 group cursor-pointer" onclick="showQR('<?= $tableNumber ?>', '<?= $qrDataUri ?>')">
-                <img src="<?= $qrDataUri ?>" alt="QR Meja <?= $tableNumber ?>" class="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div class="w-20 h-20 flex flex-col items-center justify-center text-gray-400 group-hover:text-[var(--brand)] transition-colors">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/><path d="M7 7h1"/><path d="M18 7h1"/><path d="M7 18h1"/></svg>
+                    <span class="text-[10px] font-black uppercase tracking-wider mt-2">Klik untuk Scan</span>
+                </div>
             </div>
 
             <div class="flex items-center justify-between">

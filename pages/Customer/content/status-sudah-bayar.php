@@ -33,6 +33,14 @@ $steps = [
     4 => ['title' => 'Siap', 'desc' => 'Pesanan sudah siap diantarkan'],
     5 => ['title' => 'Selesai', 'desc' => 'Pesanan telah sampai'],
 ];
+
+$warungStatusMapping = [
+    'new' => ['label' => 'Menunggu', 'class' => 'bg-gray-50 text-gray-500 border-gray-200'],
+    'accepted' => ['label' => 'Diterima', 'class' => 'bg-blue-50 text-blue-600 border-blue-100'],
+    'processing' => ['label' => 'Diproses', 'class' => 'bg-yellow-50 text-yellow-600 border-yellow-100'],
+    'ready' => ['label' => 'Siap', 'class' => 'bg-green-50 text-green-600 border-green-100'],
+    'completed' => ['label' => 'Selesai', 'class' => 'bg-teal-50 text-teal-600 border-teal-100'],
+];
 ?>
 
 <!-- Scrollable Content -->
@@ -101,11 +109,14 @@ $steps = [
             Detail Menu
         </span>
 
-        <?php foreach ($groups as $g) { ?>
+        <?php foreach ($groups as $g) { 
+            $wStatus = $g['status'] ?? 'new';
+            $sMap = $warungStatusMapping[$wStatus] ?? ['label' => strtoupper($wStatus), 'class' => 'bg-gray-50 text-gray-500 border-gray-200'];
+        ?>
         <div class="bg-white rounded-3xl border border-[#F3F4F6] shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6] bg-[#FAFAF9]">
                 <span class="font-inter text-[#261817] text-sm font-bold leading-6"><?php echo htmlspecialchars((string) $g['warung_name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                <span class="text-[#7B0009] text-[10px] font-bold tracking-wide bg-[#FEF2F2] border border-[#FEE2E2] rounded-lg px-2 py-1">CONFIRMED</span>
+                <span class="text-[10px] font-bold tracking-wide rounded-lg px-2 py-1 border <?php echo $sMap['class']; ?>"><?php echo $sMap['label']; ?></span>
             </div>
             <div class="flex flex-col gap-4 px-5 py-4">
                 <?php foreach ($g['items'] as $it) {

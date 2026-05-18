@@ -3,56 +3,6 @@ $activePage = $activePage ?? 'dashboard';
 
 $db = \App\Core\Database::mysqli();
 $venueId = (int) \App\Staff\StaffAuth::venueId();
-
-// Count all active orders (paid, accepted, processing, ready)
-$activeOrdersCount = 0;
-$q = $db->prepare("SELECT COUNT(*) FROM orders WHERE venue_id = ? AND status IN ('paid', 'accepted', 'processing', 'ready')");
-if ($q) {
-    $q->bind_param('i', $venueId);
-    $q->execute();
-    $q->bind_result($activeOrdersCount);
-    $q->fetch();
-    $q->close();
-}
-
-// Count inactive warungs (is_active = 0)
-$inactiveWarungsCount = 0;
-$q = $db->prepare("SELECT COUNT(*) FROM warungs WHERE venue_id = ? AND is_active = 0");
-if ($q) {
-    $q->bind_param('i', $venueId);
-    $q->execute();
-    $q->bind_result($inactiveWarungsCount);
-    $q->fetch();
-    $q->close();
-}
-
-// Count menus that are out of stock (stock_quantity = 0) or unavailable (is_available = 0) across all warungs of this venue
-$warningMenusCount = 0;
-$q = $db->prepare("
-    SELECT COUNT(*) 
-    FROM menus m
-    INNER JOIN warungs w ON w.id = m.warung_id
-    WHERE w.venue_id = ? 
-      AND (m.is_available = 0 OR m.stock_quantity = 0)
-");
-if ($q) {
-    $q->bind_param('i', $venueId);
-    $q->execute();
-    $q->bind_result($warningMenusCount);
-    $q->fetch();
-    $q->close();
-}
-
-// Count inactive tables (is_active = 0)
-$inactiveTablesCount = 0;
-$q = $db->prepare("SELECT COUNT(*) FROM dining_tables WHERE venue_id = ? AND is_active = 0");
-if ($q) {
-    $q->bind_param('i', $venueId);
-    $q->execute();
-    $q->bind_result($inactiveTablesCount);
-    $q->fetch();
-    $q->close();
-}
 ?>
 <!-- Admin Sidebar -->
 <aside class="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col justify-between flex-shrink-0">
@@ -95,11 +45,6 @@ if ($q) {
                     </svg>
                     <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Manajemen Pesanan</span>
                 </div>
-                <?php if ($activeOrdersCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-[var(--brand)] text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $activeOrdersCount ?> pesanan aktif sedang berjalan">
-                        <?= $activeOrdersCount ?>
-                    </div>
-                <?php endif; ?>
             </a>
 
             <!-- Tenant Management -->
@@ -112,11 +57,6 @@ if ($q) {
                     </svg>
                     <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Manajemen Stan</span>
                 </div>
-                <?php if ($inactiveWarungsCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $inactiveWarungsCount ?> stan dinonaktifkan">
-                        <?= $inactiveWarungsCount ?>
-                    </div>
-                <?php endif; ?>
             </a>
 
             <!-- Menu Management -->
@@ -129,11 +69,6 @@ if ($q) {
                     </svg>
                     <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Manajemen Menu</span>
                 </div>
-                <?php if ($warningMenusCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $warningMenusCount ?> menu habis atau dinonaktifkan">
-                        <?= $warningMenusCount ?>
-                    </div>
-                <?php endif; ?>
             </a>
 
             <!-- Table Management -->
@@ -146,11 +81,6 @@ if ($q) {
                     </svg>
                     <span class="font-semibold text-sm leading-5 whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Manajemen Meja</span>
                 </div>
-                <?php if ($inactiveTablesCount > 0): ?>
-                    <div class="flex items-center justify-center min-w-[22px] h-[22px] bg-amber-500 text-white px-1.5 rounded-full shadow-sm flex-shrink-0 ml-2" style="color: #ffffff !important; font-size: 11px !important; font-weight: 700 !important; line-height: 1 !important;" title="<?= $inactiveTablesCount ?> meja makan dinonaktifkan">
-                        <?= $inactiveTablesCount ?>
-                    </div>
-                <?php endif; ?>
             </a>
 
             <!-- Reports -->

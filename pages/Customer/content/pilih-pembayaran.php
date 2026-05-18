@@ -14,10 +14,9 @@ $venue = (new VenueRepository())->findById($venueId);
 
 $allowQris = (bool) ($venue['allow_qris'] ?? true);
 $allowCash = (bool) ($venue['allow_cash'] ?? true);
-$allowDebit = (bool) ($venue['allow_debit'] ?? false);
 
 // Default selected method based on availability
-$defaultMethod = $allowQris ? 'qris' : ($allowCash ? 'kasir' : 'midtrans');
+$defaultMethod = $allowQris ? 'qris' : 'kasir';
 
 $orderToken = isset($_GET['o']) ? (string) $_GET['o'] : '';
 ?>
@@ -47,24 +46,6 @@ $orderToken = isset($_GET['o']) ? (string) $_GET['o'] : '';
                 </div>
                 <div class="w-6 h-6 rounded-full border-2 <?= $defaultMethod === 'qris' ? 'border-[#800000]' : 'border-[#E7E5E4]' ?> flex items-center justify-center flex-shrink-0 radio-button">
                     <?php if ($defaultMethod === 'qris'): ?><div class="w-3 h-3 rounded-full bg-[#800000]"></div><?php endif; ?>
-                </div>
-            </button>
-            <?php endif; ?>
-
-            <?php if ($allowDebit): ?>
-            <!-- Midtrans -->
-            <button type="button" class="payment-option group flex items-center justify-between w-full p-6 rounded-3xl bg-white transition-all <?= $defaultMethod === 'midtrans' ? 'border-2 border-[#800000]' : 'border border-[#F5F5F4] opacity-70' ?> shadow-[0_4px_20px_0_rgba(0,0,0,0.04)] cursor-pointer hover:shadow-[0_6px_24px_0_rgba(0,0,0,0.08)]" data-method="midtrans">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 <?= $defaultMethod === 'midtrans' ? 'bg-[#800000]' : 'bg-[#E5E2DD]' ?> transition-colors">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6zm2 2v8h12V8H6zm2 2h8v2H8v-2zm0 3h5v2H8v-2z" fill="<?= $defaultMethod === 'midtrans' ? 'white' : '#5F5E5B' ?>"/></svg>
-                    </div>
-                    <div class="flex flex-col items-start text-left">
-                        <span class="text-sm font-semibold text-[#1A1C1A] leading-[16.8px] tracking-[0.7px]">Kartu / E-Wallet</span>
-                        <span class="text-xs text-[#5F5E5B] leading-[19.2px] mt-0.5">Payment gateway — Snap</span>
-                    </div>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 <?= $defaultMethod === 'midtrans' ? 'border-[#800000]' : 'border-[#E7E5E4]' ?> flex items-center justify-center flex-shrink-0 radio-button">
-                    <?php if ($defaultMethod === 'midtrans'): ?><div class="w-3 h-3 rounded-full bg-[#800000]"></div><?php endif; ?>
                 </div>
             </button>
             <?php endif; ?>
@@ -153,7 +134,7 @@ $orderToken = isset($_GET['o']) ? (string) $_GET['o'] : '';
             btnContinue.addEventListener('click', async () => {
                 const apiRoot = document.body.getAttribute('data-api-root');
                 if (!apiRoot) return;
-                const payment_method = selectedMethod === 'qris' ? 'qris' : (selectedMethod === 'midtrans' ? 'midtrans' : 'kasir');
+                const payment_method = selectedMethod === 'qris' ? 'qris' : 'kasir';
                 btnContinue.disabled = true;
                 try {
                     const url = orderToken ? apiRoot + '/order-update-payment.php' : apiRoot + '/order-create.php';
@@ -187,8 +168,6 @@ $orderToken = isset($_GET['o']) ? (string) $_GET['o'] : '';
                     const tokenParam = orderToken ? '&o=' + encodeURIComponent(orderToken) : '';
                     if (selectedMethod === 'qris') {
                         window.location.href = './index.php?page=bayar-qris' + tokenParam;
-                    } else if (selectedMethod === 'midtrans') {
-                        window.location.href = './index.php?page=bayar-midtrans' + tokenParam;
                     } else {
                         window.location.href = './index.php?page=bayar-kasir' + tokenParam;
                     }

@@ -176,9 +176,18 @@ final class OrderRepository
         foreach ($items as $item) {
             $wid = (int) $item['warung_id'];
             if (!isset($groups[$wid])) {
+                // Fetch fulfillment status for this specific warung
+                $sql = 'SELECT status FROM order_warung_fulfillment WHERE order_id = ? AND warung_id = ? LIMIT 1';
+                $stmt = Database::mysqli()->prepare($sql);
+                $stmt->bind_param('ii', $orderId, $wid);
+                $stmt->execute();
+                $ful = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
                 $groups[$wid] = [
                     'warung_id' => $wid,
                     'warung_name' => (string) $item['warung_name'],
+                    'status' => $ful['status'] ?? 'new',
                     'items' => [],
                 ];
             }

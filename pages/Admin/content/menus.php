@@ -14,7 +14,7 @@ $warungRepo = new WarungRepository();
 $filterWarungId  = isset($_GET['warung_id']) && $_GET['warung_id'] !== '' ? (int) $_GET['warung_id'] : null;
 $filterCategoryId = isset($_GET['category_id']) && $_GET['category_id'] !== '' ? (int) $_GET['category_id'] : null;
 
-$allMenus    = $menuRepo->listAdminByVenue($venueId, $filterWarungId);
+$allMenus    = $menuRepo->listAdminByVenue($venueId, $filterWarungId, $filterCategoryId);
 $warungs     = $warungRepo->listByVenueId($venueId);
 $categories  = $menuRepo->listCategories();
 
@@ -273,11 +273,6 @@ $apiBase = PublicUrl::basePath();
             </div>
 
             <div>
-                <label class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block mb-1">Deskripsi</label>
-                <textarea id="menuDescription" name="description" rows="2" placeholder="Deskripsi singkat menu..." class="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--brand-soft)] resize-none"></textarea>
-            </div>
-
-            <div>
                 <label class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block mb-1">URL Gambar</label>
                 <input type="url" id="menuImageUrl" name="image_url" placeholder="https://..." class="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-[var(--brand-soft)]">
             </div>
@@ -373,51 +368,12 @@ $apiBase = PublicUrl::basePath();
             const filterLink = e.target.closest('.category-filter-link');
             if (filterLink) {
                 e.preventDefault();
-                const catId = filterLink.dataset.categoryId;
-                
-                // Update active state in sidebar
-                document.querySelectorAll('.category-filter-link').forEach(link => {
-                    link.classList.remove('bg-[var(--brand-muted)]', 'border-l-4', 'border-[var(--brand)]');
-                    link.classList.add('hover:bg-gray-50');
-                    const span = link.querySelector('span.text-xs');
-                    if (span) {
-                        span.classList.remove('text-[var(--brand)]', 'uppercase', 'tracking-wider', 'font-black');
-                        span.classList.add('text-[var(--text-muted)]', 'ml-4', 'font-bold');
-                    }
-                    const dot = link.querySelector('div.w-1.5');
-                    if (dot) dot.remove();
-                });
-                
-                filterLink.classList.add('bg-[var(--brand-muted)]', 'border-l-4', 'border-[var(--brand)]');
-                filterLink.classList.remove('hover:bg-gray-50');
-                const span = filterLink.querySelector('span.text-xs');
-                if (span) {
-                    span.classList.remove('text-[var(--text-muted)]', 'ml-4', 'font-bold');
-                    span.classList.add('text-[var(--brand)]', 'uppercase', 'tracking-wider', 'font-black');
-                    
-                    const dot = document.createElement('div');
-                    dot.className = 'w-1.5 h-1.5 rounded-full bg-[var(--brand)] mr-2';
-                    span.parentNode.insertBefore(dot, span);
-                }
-                
-                // Filter items
-                document.querySelectorAll('.menu-item').forEach(item => {
-                    if (catId === 'all' || item.dataset.categoryId === catId) {
-                        item.classList.remove('hidden');
-                    } else {
-                        item.classList.add('hidden');
-                    }
-                });
-                
-                // Update URL without reload
-                const url = new URL(window.location.href);
-                if (catId === 'all') {
-                    url.searchParams.delete('category_id');
+                const url = new URL(filterLink.href);
+                if (typeof window.scanteenLoadPage === 'function') {
+                    window.scanteenLoadPage(url.search);
                 } else {
-                    url.searchParams.set('category_id', catId);
+                    window.location.href = url.search;
                 }
-                history.pushState({}, '', url);
-                
                 return;
             }
 
@@ -429,7 +385,6 @@ $apiBase = PublicUrl::basePath();
                 document.getElementById('menuCategoryId').value  = editBtn.dataset.category_id;
                 document.getElementById('menuName').value        = editBtn.dataset.name;
                 document.getElementById('menuPrice').value       = editBtn.dataset.price;
-                document.getElementById('menuDescription').value = editBtn.dataset.description;
                 document.getElementById('menuImageUrl').value    = editBtn.dataset.image_url;
                 document.getElementById('menuIsAvailable').checked = editBtn.dataset.is_available === '1';
                 
@@ -528,7 +483,7 @@ $apiBase = PublicUrl::basePath();
             category_id: parseInt(document.getElementById('menuCategoryId').value, 10),
             name:        document.getElementById('menuName').value,
             price:       parseFloat(document.getElementById('menuPrice').value),
-            description: document.getElementById('menuDescription').value,
+            description: '',
             image_url:   document.getElementById('menuImageUrl').value,
             is_available: document.getElementById('menuIsAvailable').checked ? 1 : 0,
         };

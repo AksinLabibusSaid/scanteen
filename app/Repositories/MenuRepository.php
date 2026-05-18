@@ -95,7 +95,7 @@ final class MenuRepository
      *
      * @return list<array<string, mixed>>
      */
-    public function listAdminByVenue(int $venueId, ?int $warungId = null): array
+    public function listAdminByVenue(int $venueId, ?int $warungId = null, ?int $categoryId = null): array
     {
         $sql = <<<SQL
             SELECT
@@ -118,16 +118,24 @@ final class MenuRepository
         if ($warungId !== null && $warungId > 0) {
             $sql .= ' AND m.warung_id = ?';
         }
+        if ($categoryId !== null && $categoryId > 0) {
+            $sql .= ' AND m.category_id = ?';
+        }
         $sql .= ' ORDER BY w.sort_order ASC, m.id ASC';
 
         $mysqli = Database::mysqli();
-        if ($warungId !== null && $warungId > 0) {
-            $stmt = $mysqli->prepare($sql);
+        $stmt = $mysqli->prepare($sql);
+        
+        if ($warungId !== null && $warungId > 0 && $categoryId !== null && $categoryId > 0) {
+            $stmt->bind_param('iii', $venueId, $warungId, $categoryId);
+        } elseif ($warungId !== null && $warungId > 0) {
             $stmt->bind_param('ii', $venueId, $warungId);
+        } elseif ($categoryId !== null && $categoryId > 0) {
+            $stmt->bind_param('ii', $venueId, $categoryId);
         } else {
-            $stmt = $mysqli->prepare($sql);
             $stmt->bind_param('i', $venueId);
         }
+        
         $stmt->execute();
         $result = $stmt->get_result();
         $rows = [];

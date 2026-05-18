@@ -13,10 +13,12 @@ final class CustomerAccess
 {
     public static function syncTableTokenFromRequest(): bool
     {
+        file_put_contents(dirname(__DIR__, 2) . '/pages/Customer/log.txt', "Full GET: " . json_encode($_GET) . "\n", FILE_APPEND);
         if (!isset($_GET['t'])) {
             return false;
         }
         $token = trim((string) $_GET['t']);
+        file_put_contents(dirname(__DIR__, 2) . '/pages/Customer/log.txt', "Received token: " . $token . "\n", FILE_APPEND);
         if ($token === '') {
             return false;
         }
@@ -24,7 +26,12 @@ final class CustomerAccess
         $repo = new DiningTableRepository();
         $row = $repo->findActiveByToken($token);
         if ($row === null) {
+            self::clear(); // Clear session to prevent falling back to old table
             return false;
+        }
+
+        if (isset($_SESSION[CustomerSessionKeys::TABLE_ID]) && (int) $_SESSION[CustomerSessionKeys::TABLE_ID] !== (int) $row['dining_table_id']) {
+            self::clear();
         }
 
         $_SESSION[CustomerSessionKeys::TABLE_ID] = (int) $row['dining_table_id'];

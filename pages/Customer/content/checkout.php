@@ -21,8 +21,8 @@ $emailVal = htmlspecialchars((string) ($draft['email'] ?? ''), ENT_QUOTES, 'UTF-
 $dineInActive = ($draft['dining_type'] ?? 'dine_in') !== 'take_away';
 
 $subtotal = (float) $sum['subtotal'];
-$serviceTax = round($subtotal * 0.10, 2);
-$grandTotal = round($subtotal + $serviceTax, 2);
+$serviceTax = 0.0;
+$grandTotal = $subtotal;
 ?>
 
 <main class="flex-1 flex flex-col gap-6 px-6 pt-6 pb-48">
@@ -94,7 +94,6 @@ $grandTotal = round($subtotal + $serviceTax, 2);
 
   <section class="flex flex-col gap-2 text-sm text-[#5F5E5B]">
     <div class="flex justify-between"><span>Subtotal</span><span><?php echo htmlspecialchars(Money::formatIdr($subtotal), ENT_QUOTES, 'UTF-8'); ?></span></div>
-    <div class="flex justify-between"><span>Service (10%)</span><span><?php echo htmlspecialchars(Money::formatIdr($serviceTax), ENT_QUOTES, 'UTF-8'); ?></span></div>
   </section>
 </main>
 

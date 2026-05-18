@@ -74,12 +74,8 @@ final class OrderCreationService
             ];
         }
 
-        $venueRepo = new \App\Repositories\VenueRepository();
-        $venue = $venueRepo->findById($ctx->venueId);
-        $serviceRate = ($venue['service_fee_percent'] ?? 10.0) / 100.0;
-        
-        $serviceTax = round($subtotal * $serviceRate, 2);
-        $total = round($subtotal + $serviceTax, 2);
+        $serviceTax = 0.0;
+        $total = $subtotal;
 
         $publicToken = TokenGenerator::publicToken();
         $orderDate = new \DateTimeImmutable('now', new \DateTimeZone(date_default_timezone_get()));
